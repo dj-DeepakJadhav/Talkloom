@@ -1,0 +1,14 @@
+class: Source
+table: sources
+fields:
+  userId: String
+  type: String
+  url: String?
+  rawText: String
+  title: String
+  targetLanguage: String
+  cefrLevel: String
+  createdAt: DateTime
+indexes:
+  source_user_lang_idx:
+    fields: userId, targetLanguage

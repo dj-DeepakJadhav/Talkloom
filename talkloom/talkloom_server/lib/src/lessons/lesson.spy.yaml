@@ -1,0 +1,16 @@
+class: Lesson
+table: lessons
+fields:
+  userId: String
+  sourceId: int
+  targetLanguage: String
+  supportLanguage: String
+  objectives: List<String>
+  vocabulary: String
+  grammar: String
+  activities: String
+  conversationPlan: String
+  createdAt: DateTime
+indexes:
+  lesson_user_lang_idx:
+    fields: userId, targetLanguage

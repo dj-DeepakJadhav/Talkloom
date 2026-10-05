@@ -1,0 +1,9 @@
+﻿class: LearnerState
+table: learner_state
+fields:
+  userId: String
+  targetLanguage: String
+  recognizedWords: List<String>
+  activeWords: List<String>
+  grammarMastery: String
+  updatedAt: DateTime

@@ -1,0 +1,28 @@
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+greeting:
+  - hello:
+learnerState:
+  - getLearnerState:
+  - recordEvidenceEvent:
+  - getEvidenceHistory:
+lessonCompiler:
+  - compileLesson:
+pedagogical:
+  - stepConversationTurn:
+  - getLearnerState:
+  - getEvidenceHistory:
+ingestion:
+  - processSourceAndCompile:
+  - listSources:
+  - getLessonBySourceId:
+  - listLessons:
