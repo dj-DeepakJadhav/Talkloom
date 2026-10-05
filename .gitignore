@@ -1,0 +1,134 @@
+# ==============================================================================
+# Talkloom Root .gitignore
+# Comprehensive exclusion of build artifacts, runtime databases, secrets,
+# caches, OS files, and cloned reference materials.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Operating System & IDE Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# IDE / Editor configuration
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.settings/
+
+# ------------------------------------------------------------------------------
+# Secrets & Private Environment Configurations
+# (Never commit API keys, service accounts, or database passwords)
+# ------------------------------------------------------------------------------
+**/config/passwords.yaml
+**/config/passwords.local.yaml
+**/config/firebase_service_account_key.json
+*.env
+*.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# ------------------------------------------------------------------------------
+# Serverpod & Database Runtime Artifacts
+# ------------------------------------------------------------------------------
+**/.serverpod/
+**/pgdata/
+**/sp_*.db*
+**/*.sqlite
+**/*.sqlite3
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.scloud/
+
+# ------------------------------------------------------------------------------
+# Dart & Flutter Build / Dependency Artifacts
+# ------------------------------------------------------------------------------
+**/.dart_tool/
+**/.packages
+**/pubspec_overrides.yaml
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.pub-cache/
+**/.pub/
+**/build/
+**/web/app/
+**/doc/api/
+*.dart_tool
+
+# Symbolization & Obfuscation files
+app.*.symbols
+app.*.map.json
+
+# Platform-specific build outputs
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/macos/Pods/
+**/macos/.symlinks/
+**/macos/Flutter/ephemeral
+
+# ------------------------------------------------------------------------------
+# Python & Temporary Scratch Files
+# ------------------------------------------------------------------------------
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.venv/
+venv/
+ENV/
+env/
+test_gemini.py
+test_yt.py
+talkloom/talkloom_server/bin/test_ai_direct.dart
+
+# ------------------------------------------------------------------------------
+# AI Agent Workspaces & MCP Configurations
+# ------------------------------------------------------------------------------
+.dart_skills/
+.agents/
+.claude/
+.gemini/
+.cursor/
+.codex/
+.mcp.json
+.vscode/mcp.json
+
+# ------------------------------------------------------------------------------
+# Cloned Upstream Reference Repositories
+# ------------------------------------------------------------------------------
+mural_reference/
+
+# ------------------------------------------------------------------------------
+# Logs & Temporary Files
+# ------------------------------------------------------------------------------
+*.log
+*.swp
+*.swo
+*~
+.history/
+.buildlog/
