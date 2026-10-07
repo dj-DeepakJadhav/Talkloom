@@ -1,3 +1,7 @@
+anonymousIdp:
+  - isGuest:
+  - upgrade:
+  - login:
 emailIdp:
   - login:
   - startRegistration:
@@ -22,7 +26,12 @@ pedagogical:
   - getLearnerState:
   - getEvidenceHistory:
 ingestion:
+  - getImportStatus:
   - processSourceAndCompile:
   - listSources:
   - getLessonBySourceId:
   - listLessons:
+  - removeSource:
+  - restoreSource:
+speech:
+  - synthesize:

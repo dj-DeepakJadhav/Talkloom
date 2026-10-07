@@ -24,7 +24,8 @@ abstract class Source
     required this.targetLanguage,
     required this.cefrLevel,
     required this.createdAt,
-  });
+    bool? isArchived,
+  }) : isArchived = isArchived ?? false;
 
   factory Source({
     int? id,
@@ -36,6 +37,7 @@ abstract class Source
     required String targetLanguage,
     required String cefrLevel,
     required DateTime createdAt,
+    bool? isArchived,
   }) = _SourceImpl;
 
   factory Source.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -51,6 +53,9 @@ abstract class Source
       createdAt: _isc.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
+      isArchived: jsonSerialization['isArchived'] == null
+          ? null
+          : _isc.BoolJsonExtension.fromJson(jsonSerialization['isArchived']),
     );
   }
 
@@ -75,6 +80,8 @@ abstract class Source
 
   DateTime createdAt;
 
+  bool isArchived;
+
   /// Returns a shallow copy of this [Source]
   /// with some or all fields replaced by the given arguments.
   @_isc.useResult
@@ -88,6 +95,7 @@ abstract class Source
     String? targetLanguage,
     String? cefrLevel,
     DateTime? createdAt,
+    bool? isArchived,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -102,6 +110,7 @@ abstract class Source
       'targetLanguage': targetLanguage,
       'cefrLevel': cefrLevel,
       'createdAt': createdAt.toJson(),
+      'isArchived': isArchived,
     };
   }
 
@@ -118,6 +127,7 @@ abstract class Source
       'targetLanguage': targetLanguage,
       'cefrLevel': cefrLevel,
       'createdAt': createdAt.toJson(),
+      'isArchived': isArchived,
     };
   }
 
@@ -140,6 +150,7 @@ class _SourceImpl extends Source {
     required String targetLanguage,
     required String cefrLevel,
     required DateTime createdAt,
+    bool? isArchived,
   }) : super._(
          id: id,
          userId: userId,
@@ -150,6 +161,7 @@ class _SourceImpl extends Source {
          targetLanguage: targetLanguage,
          cefrLevel: cefrLevel,
          createdAt: createdAt,
+         isArchived: isArchived,
        );
 
   /// Returns a shallow copy of this [Source]
@@ -166,6 +178,7 @@ class _SourceImpl extends Source {
     String? targetLanguage,
     String? cefrLevel,
     DateTime? createdAt,
+    bool? isArchived,
   }) {
     return Source(
       id: id is int? ? id : this.id,
@@ -177,6 +190,7 @@ class _SourceImpl extends Source {
       targetLanguage: targetLanguage ?? this.targetLanguage,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       createdAt: createdAt ?? this.createdAt,
+      isArchived: isArchived ?? this.isArchived,
     );
   }
 }

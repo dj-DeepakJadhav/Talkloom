@@ -1,0 +1,7 @@
+[mcp_servers.serverpod]
+command = "serverpod"
+args = ["mcp-server", "--server-dir", "talkloom/talkloom_server"]
+
+[mcp_servers.dart]
+command = "dart"
+args = ["mcp-server", "--force-roots-fallback"]

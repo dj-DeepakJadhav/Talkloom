@@ -104,6 +104,7 @@ class ConversationPlan {
 class LessonContent {
   const LessonContent({
     required this.lessonId,
+    this.sourceId,
     required this.objectives,
     required this.vocabulary,
     this.grammar = const [],
@@ -112,6 +113,7 @@ class LessonContent {
   });
 
   final int? lessonId;
+  final int? sourceId;
   final List<String> objectives;
   final List<VocabularyItem> vocabulary;
   final List<GrammarRule> grammar;
@@ -123,6 +125,7 @@ class LessonContent {
   static LessonContent fromLesson(Lesson lesson) {
     return LessonContent(
       lessonId: lesson.id,
+      sourceId: lesson.sourceId,
       objectives: lesson.objectives,
       vocabulary: _decodeList(
         lesson.vocabulary,
@@ -221,4 +224,3 @@ class GrammarRule {
     );
   }
 }
-

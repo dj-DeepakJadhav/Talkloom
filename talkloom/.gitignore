@@ -15,5 +15,10 @@ pubspec_overrides.yaml
 .codex/
 .mcp.json
 
+# Keep Serverpod's official agent skills available to contributors.
+!/.agents/
+!/.agents/skills/
+!/.agents/skills/**
+
 # Serverpod Cloud CLI
 .scloud/

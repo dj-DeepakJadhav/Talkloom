@@ -9,13 +9,13 @@ class PedagogicalEndpoint extends Endpoint {
   /// Learner state is per-user data. Identity comes from the authenticated
   /// session, never from a client-supplied parameter.
   @override
-  bool get requireLogin => false;
+  bool get requireLogin => true;
 
-  /// The signed-in user's stable identifier, with graceful fallback for guests.
+  /// The signed-in user's stable identifier.
   String _requireUserId(Session session) {
     final authUserId = session.authenticated?.authUserId;
     if (authUserId == null) {
-      return 'guest_learner';
+      throw StateError('Sign in to access learner progress.');
     }
     return authUserId.toString();
   }
@@ -30,21 +30,26 @@ class PedagogicalEndpoint extends Endpoint {
     String learnerUtterance,
     double responseLatencySec,
   ) async {
-    final userId = _requireUserId(session);
+    _requireUserId(session);
+    if (learnerUtterance.trim().isEmpty || learnerUtterance.length > 4000) {
+      throw ArgumentError(
+        'A conversation turn must contain 1 to 4,000 characters.',
+      );
+    }
+    if (hiddenTargets.length > 100 ||
+        previousTurns.length > 60 ||
+        previousTurns.any((turn) => turn.length > 5000)) {
+      throw ArgumentError(
+        'The conversation contains too much history or too many targets.',
+      );
+    }
     final nebiusApiKey = session.serverpod.getPassword('nebiusApiKey') ?? '';
     final geminiApiKey = session.serverpod.getPassword('geminiApiKey') ?? '';
     final nvidiaApiKey = session.serverpod.getPassword('nvidiaApiKey') ?? '';
     final groqApiKey = session.serverpod.getPassword('groqApiKey') ?? '';
-    final aiProviderSetting =
-        session.serverpod.getPassword('aiProvider')?.toLowerCase() ?? 'nvidia';
-
-    final provider = aiProviderSetting == 'groq'
-        ? AiProvider.groq
-        : (aiProviderSetting == 'nvidia'
-            ? AiProvider.nvidia
-            : (aiProviderSetting == 'nebius'
-                ? AiProvider.nebius
-                : AiProvider.nvidia));
+    final provider = AiProvider.fromSetting(
+      session.serverpod.getPassword('aiProvider'),
+    );
 
     final agent = DualPedagogicalAgentService(
       provider: provider,
@@ -64,54 +69,8 @@ class PedagogicalEndpoint extends Endpoint {
       responseLatencySec: responseLatencySec,
     );
 
-    // If target was detected, record an EvidenceEvent and update LearnerState
-    if (telemetry.targetProducedSpontaneously &&
-        telemetry.detectedTarget != null) {
-      final itemKey =
-          '${targetLanguage.toLowerCase()}:${telemetry.detectedTarget!.toLowerCase()}';
-
-      // Insert Evidence
-      final event = EvidenceEvent(
-        userId: userId,
-        targetLanguage: targetLanguage,
-        itemId: itemKey,
-        activityType: 'live_speech',
-        supportLevel: 'none',
-        spontaneous: true,
-        correct: true,
-        timestamp: DateTime.now(),
-      );
-      await EvidenceEvent.db.insertRow(session, event);
-
-      // Update or create LearnerState
-      final existingState = await LearnerState.db.findFirstRow(
-        session,
-        where: (t) =>
-            t.userId.equals(userId) & t.targetLanguage.equals(targetLanguage),
-      );
-
-      if (existingState != null) {
-        final activeList = List<String>.from(existingState.activeWords);
-        if (!activeList.contains(itemKey)) {
-          activeList.add(itemKey);
-        }
-        existingState.activeWords = activeList;
-        existingState.updatedAt = DateTime.now();
-        await LearnerState.db.updateRow(session, existingState);
-      } else {
-        final newState = LearnerState(
-          userId: userId,
-          targetLanguage: targetLanguage,
-          recognizedWords: [itemKey],
-          activeWords: [itemKey],
-          grammarMastery: jsonEncode({
-            'polite_indirect_question': 'in_progress',
-          }),
-          updatedAt: DateTime.now(),
-        );
-        await LearnerState.db.insertRow(session, newState);
-      }
-    }
+    // Word spotting is not semantic assessment. Until an evaluator checks the
+    // learner's intended meaning and context, this endpoint never writes mastery.
 
     return jsonEncode(telemetry.toJson());
   }

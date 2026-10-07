@@ -76,7 +76,10 @@ class _ThemesScreenState extends ConsumerState<ThemesScreen> {
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: colors.border),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -88,7 +91,8 @@ class _ThemesScreenState extends ConsumerState<ThemesScreen> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        onChanged: (val) =>
+                            setState(() => _searchQuery = val.trim()),
                         style: context.type.body.copyWith(
                           fontSize: 15,
                           color: colors.textPrimary,
@@ -162,7 +166,10 @@ class _ThemesScreenState extends ConsumerState<ThemesScreen> {
                     widget.onStartGeneralTalk?.call();
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 18,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.surface,
                       borderRadius: BorderRadius.circular(22),
@@ -203,7 +210,8 @@ class _ThemesScreenState extends ConsumerState<ThemesScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _categories.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final cat = _categories[index];
                     final isSelected = cat == _selectedCategory;
@@ -219,7 +227,9 @@ class _ThemesScreenState extends ConsumerState<ThemesScreen> {
                         color: isSelected ? colors.primary : colors.border,
                       ),
                       labelStyle: context.type.caption.copyWith(
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isSelected ? colors.primary : colors.textPrimary,
                         fontSize: 13,
                       ),

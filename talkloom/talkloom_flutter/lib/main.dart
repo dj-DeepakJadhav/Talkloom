@@ -5,6 +5,7 @@ import 'app/providers.dart';
 import 'app/router.dart';
 import 'client.dart';
 import 'design/theme.dart';
+import 'core/platform/qwen_speech_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,11 +26,12 @@ class TalkloomApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
+      scaffoldMessengerKey: speechMessengerKey,
       title: 'Talkloom',
       debugShowCheckedModeBanner: false,
       theme: buildTalkloomTheme(Brightness.light),
       darkTheme: buildTalkloomTheme(Brightness.dark),
-      themeMode: ThemeMode.dark,
+      themeMode: ref.watch(appThemeProvider),
       routerConfig: ref.watch(routerProvider),
       builder: (context, child) => child ?? const SizedBox.shrink(),
     );

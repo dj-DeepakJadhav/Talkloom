@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talkloom_client/talkloom_client.dart';
@@ -10,6 +11,17 @@ import '../domain/lesson_content.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('Overridden during bootstrap'),
+);
+
+class AppThemeController extends Notifier<ThemeMode> {
+  @override
+  ThemeMode build() => ThemeMode.light;
+  void toggle() =>
+      state = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+}
+
+final appThemeProvider = NotifierProvider<AppThemeController, ThemeMode>(
+  AppThemeController.new,
 );
 
 final lessonRepositoryProvider = Provider<LessonRepository>(
@@ -28,13 +40,16 @@ class LearningSessionController extends Notifier<LearningSession> {
     final raw = ref.watch(sharedPreferencesProvider).getString(_key);
     if (raw == null) return LearningSession.guestDefault();
     try {
-      return LearningSession.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return LearningSession.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      ).copyWith(target: LanguageCatalog.byCode('de'));
     } on FormatException {
       return LearningSession.guestDefault();
     }
   }
 
   Future<void> save(LearningSession session) async {
+    session = session.copyWith(target: LanguageCatalog.byCode('de'));
     state = session;
     await ref
         .read(sharedPreferencesProvider)
@@ -55,7 +70,8 @@ final learningSessionProvider =
 
 /// True once the learner has chosen what they are learning or has persisted preferences.
 final isOnboardedProvider = Provider<bool>(
-  (ref) => ref.watch(sharedPreferencesProvider).containsKey('talkloom.session.v1'),
+  (ref) =>
+      ref.watch(sharedPreferencesProvider).containsKey('talkloom.session.v1'),
 );
 
 /// Imported sources for the active target language.
@@ -86,6 +102,31 @@ final activeLessonProvider =
     NotifierProvider<ActiveLessonController, LessonContent?>(
       ActiveLessonController.new,
     );
+
+class SelectedSourceController extends Notifier<Source?> {
+  @override
+  Source? build() => null;
+
+  void select(Source source) => state = source;
+  void clear() => state = null;
+}
+
+final selectedSourceProvider =
+    NotifierProvider<SelectedSourceController, Source?>(
+      SelectedSourceController.new,
+    );
+
+final lessonsProvider = FutureProvider.autoDispose<List<Lesson>>((ref) {
+  return ref
+      .watch(lessonRepositoryProvider)
+      .listLessons(
+        ref.watch(learningSessionProvider),
+      );
+});
+
+final sourceLessonProvider = FutureProvider.autoDispose.family<Lesson?, int>(
+  (ref, id) => ref.watch(lessonRepositoryProvider).lessonForSource(id),
+);
 
 /// Drives the import action and exposes its loading and error states, so the
 /// UI can no longer show a spinner that silently stops.
@@ -126,8 +167,13 @@ class ImportController extends Notifier<AsyncValue<LessonContent?>> {
     required String url,
   }) {
     return _run(
-      (repository, session) =>
-          repository.compileFromUrl(session: session, title: title, url: url),
+      (repository, session) => repository.compileFromUrl(
+        session: session,
+        title: title,
+        url: url,
+        onProgress: (stage) =>
+            ref.read(importProgressProvider.notifier).setStage(stage),
+      ),
     );
   }
 
@@ -137,16 +183,23 @@ class ImportController extends Notifier<AsyncValue<LessonContent?>> {
     final session = ref.read(learningSessionProvider);
 
     state = const AsyncValue.loading();
+    ref.read(importProgressProvider.notifier).setStage('reading');
     try {
       final content = LessonContent.fromLesson(
         await action(ref.read(lessonRepositoryProvider), session),
       );
       state = AsyncValue.data(content);
+      ref.read(importProgressProvider.notifier).setStage('ready');
       ref.read(activeLessonProvider.notifier).open(content);
+      if (content.sourceId != null) {
+        ref.invalidate(sourceLessonProvider(content.sourceId!));
+      }
       ref.invalidate(sourcesProvider);
+      ref.invalidate(lessonsProvider);
       return content;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
+      ref.read(importProgressProvider.notifier).setStage('failed');
       return null;
     }
   }
@@ -154,11 +207,26 @@ class ImportController extends Notifier<AsyncValue<LessonContent?>> {
   void clearError() {
     if (state.hasError) state = const AsyncValue.data(null);
   }
+
+  void reset() {
+    if (!state.isLoading) state = const AsyncValue.data(null);
+  }
 }
 
 final importControllerProvider =
     NotifierProvider<ImportController, AsyncValue<LessonContent?>>(
       ImportController.new,
+    );
+
+class ImportProgressController extends Notifier<String> {
+  @override
+  String build() => 'reading';
+  void setStage(String stage) => state = stage;
+}
+
+final importProgressProvider =
+    NotifierProvider<ImportProgressController, String>(
+      ImportProgressController.new,
     );
 
 /// Client-side Bring-Your-Own-Key (BYOK) Configuration
@@ -213,12 +281,12 @@ class ByokConfig {
   }
 
   Map<String, dynamic> toJson() => {
-        'activeProvider': activeProvider.name,
-        'geminiKey': geminiKey,
-        'nvidiaKey': nvidiaKey,
-        'groqKey': groqKey,
-        'isCustomKeyEnabled': isCustomKeyEnabled,
-      };
+    'activeProvider': activeProvider.name,
+    'geminiKey': geminiKey,
+    'nvidiaKey': nvidiaKey,
+    'groqKey': groqKey,
+    'isCustomKeyEnabled': isCustomKeyEnabled,
+  };
 
   factory ByokConfig.fromJson(Map<String, dynamic> json) {
     final providerStr = json['activeProvider'] as String? ?? 'nvidia';
@@ -282,5 +350,5 @@ class ByokSettingsController extends Notifier<ByokConfig> {
 
 final byokSettingsProvider =
     NotifierProvider<ByokSettingsController, ByokConfig>(
-  ByokSettingsController.new,
-);
+      ByokSettingsController.new,
+    );

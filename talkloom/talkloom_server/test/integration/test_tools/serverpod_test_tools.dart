@@ -48,6 +48,9 @@ export 'package:serverpod_test/serverpod_test_public_exports.dart';
 ///
 /// [enableSessionLogging] Whether session logging should be enabled. Defaults to `false`
 ///
+/// [ephemeralDatabase] Whether this group gets its own empty database, created when the group starts and dropped when it finishes. Defaults to `true`.
+/// Set this to `false` to use the database configured for [runMode], including a previously seeded database. [configOverride] can still replace that database. The configured database is not created or dropped, so groups that share it cannot run in parallel. [rollbackDatabase] still controls whether writes inside the group are rolled back.
+///
 /// [rollbackDatabase] Options for when to rollback the database during the test lifecycle.
 /// By default `withServerpod` does all database operations inside a transaction that is rolled back after each `test` case.
 /// Just like the following enum describes, the behavior of the automatic rollbacks can be configured:
@@ -117,6 +120,7 @@ void withServerpod(
   _is.ServerpodConfig Function(_is.ServerpodConfig)? configOverride,
   _is.DatabaseInterceptor? databaseInterceptor,
   bool? enableSessionLogging,
+  bool? ephemeralDatabase,
   _is.ExperimentalFeatures? experimentalFeatures,
   _ist.RollbackDatabase? rollbackDatabase,
   String? runMode,
@@ -135,6 +139,7 @@ void withServerpod(
       serializationManager: Protocol(),
       runMode: runMode,
       applyMigrations: applyMigrations,
+      ephemeralDatabase: ephemeralDatabase,
       isDatabaseEnabled: true,
       serverpodLoggingMode: serverpodLoggingMode,
       testServerOutputMode: testServerOutputMode,
@@ -153,6 +158,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final _AnonymousIdpEndpoint anonymousIdp;
+
   late final _EmailIdpEndpoint emailIdp;
 
   late final _JwtRefreshEndpoint jwtRefresh;
@@ -166,6 +173,8 @@ class TestEndpoints {
   late final _PedagogicalEndpoint pedagogical;
 
   late final _IngestionEndpoint ingestion;
+
+  late final _SpeechEndpoint speech;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -175,6 +184,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _is.SerializationManager serializationManager,
     _is.EndpointDispatch endpoints,
   ) {
+    anonymousIdp = _AnonymousIdpEndpoint(
+      endpoints,
+      serializationManager,
+    );
     emailIdp = _EmailIdpEndpoint(
       endpoints,
       serializationManager,
@@ -203,6 +216,111 @@ class _InternalTestEndpoints extends TestEndpoints
       endpoints,
       serializationManager,
     );
+    speech = _SpeechEndpoint(
+      endpoints,
+      serializationManager,
+    );
+  }
+}
+
+class _AnonymousIdpEndpoint {
+  _AnonymousIdpEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<bool> isGuest(_ist.TestSessionBuilder sessionBuilder) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'anonymousIdp',
+            method: 'isGuest',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'anonymousIdp',
+          methodName: 'isGuest',
+          parameters: _ist.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<void> upgrade(
+    _ist.TestSessionBuilder sessionBuilder,
+    String accountToken,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'anonymousIdp',
+            method: 'upgrade',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'anonymousIdp',
+          methodName: 'upgrade',
+          parameters: _ist.testObjectToJson({'accountToken': accountToken}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<void>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<_iacs.AuthSuccess> login(
+    _ist.TestSessionBuilder sessionBuilder, {
+    String? token,
+  }) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'anonymousIdp',
+            method: 'login',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'anonymousIdp',
+          methodName: 'login',
+          parameters: _ist.testObjectToJson({'token': token}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<_iacs.AuthSuccess>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
   }
 }
 
@@ -872,6 +990,43 @@ class _IngestionEndpoint {
 
   final _is.SerializationManager _serializationManager;
 
+  _ida.Future<String> getImportStatus(
+    _ist.TestSessionBuilder sessionBuilder,
+    String url,
+    String targetLanguage,
+    DateTime startedAt,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'ingestion',
+            method: 'getImportStatus',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'ingestion',
+          methodName: 'getImportStatus',
+          parameters: _ist.testObjectToJson({
+            'url': url,
+            'targetLanguage': targetLanguage,
+            'startedAt': startedAt,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _ida.Future<_i671tbp8.Lesson> processSourceAndCompile(
     _ist.TestSessionBuilder sessionBuilder,
     String type,
@@ -1015,6 +1170,114 @@ class _IngestionEndpoint {
                   _localCallContext.arguments,
                 )
                 as _ida.Future<List<_i671tbp8.Lesson>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> removeSource(
+    _ist.TestSessionBuilder sessionBuilder,
+    int sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'ingestion',
+            method: 'removeSource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'ingestion',
+          methodName: 'removeSource',
+          parameters: _ist.testObjectToJson({'sourceId': sourceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _ida.Future<bool> restoreSource(
+    _ist.TestSessionBuilder sessionBuilder,
+    int sourceId,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'ingestion',
+            method: 'restoreSource',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'ingestion',
+          methodName: 'restoreSource',
+          parameters: _ist.testObjectToJson({'sourceId': sourceId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _SpeechEndpoint {
+  _SpeechEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Future<String> synthesize(
+    _ist.TestSessionBuilder sessionBuilder,
+    String text,
+    String language,
+  ) async {
+    return _ist.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'speech',
+            method: 'synthesize',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'speech',
+          methodName: 'synthesize',
+          parameters: _ist.testObjectToJson({
+            'text': text,
+            'language': language,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _ida.Future<String>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

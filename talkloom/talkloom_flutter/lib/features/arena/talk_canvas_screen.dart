@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,10 +14,16 @@ import 'conversation_themes.dart';
 enum _Speaker { learner, tutor }
 
 class _Message {
-  const _Message(this.speaker, this.text, {this.translation});
+  const _Message(
+    this.speaker,
+    this.text, {
+    this.translation,
+    this.responseMode,
+  });
   final _Speaker speaker;
   final String text;
   final String? translation;
+  final String? responseMode;
 }
 
 /// Mural 1:1 Talk Canvas Screen (matching 03-talk.png & RootView.swift: TalkView)
@@ -47,7 +54,6 @@ class TalkCanvasScreen extends ConsumerStatefulWidget {
 class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
     with SingleTickerProviderStateMixin {
   final List<_Message> _messages = [];
-  final List<String> _tutorTurns = [];
 
   bool _isSending = false;
   bool _isSpeaking = false;
@@ -90,17 +96,15 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
     final greeting = theme != null
         ? theme.initialGreeting
         : (activeLesson?.conversation.role != null
-            ? 'Hallo! Ich bin dein Sprachpartner (${activeLesson!.conversation.role}).'
-            : 'Hallo! Was darf es für Sie sein?');
-    final translation = theme != null
-        ? theme.initialTranslation
-        : 'Hello! How can I help you today?';
+              ? 'Hallo! Ich bin dein Sprachpartner (${activeLesson!.conversation.role}).'
+              : 'Hallo! Was darf es für Sie sein?');
+    final translation = theme?.initialTranslation;
 
     setState(() {
       _messages.clear();
-      _tutorTurns.clear();
-      _messages.add(_Message(_Speaker.tutor, greeting, translation: translation));
-      _tutorTurns.add(greeting);
+      _messages.add(
+        _Message(_Speaker.tutor, greeting, translation: translation),
+      );
     });
   }
 
@@ -133,7 +137,14 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
     });
 
     HapticFeedback.mediumImpact();
-    WebVoiceService.instance.startListening(langCode: langTag);
+    final started = WebVoiceService.instance.startListening(langCode: langTag);
+    if (!started && mounted) {
+      setState(() {
+        _isRecording = false;
+        _error =
+            'Microphone input is unavailable. Allow microphone access or choose “Type instead”.';
+      });
+    }
   }
 
   Future<void> _stopAndSend(ConversationPlan plan) async {
@@ -145,8 +156,11 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
     if (userUtterance.isEmpty) return;
 
     final session = ref.read(learningSessionProvider);
-    final latency = (DateTime.now().difference(_turnStart).inMilliseconds / 1000.0)
-        .clamp(0.5, 20.0);
+    final latency =
+        (DateTime.now().difference(_turnStart).inMilliseconds / 1000.0).clamp(
+          0.5,
+          20.0,
+        );
 
     setState(() {
       _messages.add(_Message(_Speaker.learner, userUtterance));
@@ -156,12 +170,27 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
     });
 
     try {
-      final turn = await ref.read(lessonRepositoryProvider).speak(
+      final turn = await ref
+          .read(lessonRepositoryProvider)
+          .speak(
             session: session,
             role: plan.role,
             situation: plan.situation,
             hiddenTargets: plan.hiddenTargets,
-            previousTurns: _tutorTurns,
+            previousTurns: _messages
+                .take(_messages.length - 1)
+                .map(
+                  (message) => jsonEncode({
+                    'role': message.speaker == _Speaker.learner
+                        ? 'learner'
+                        : 'tutor',
+                    'content': message.text,
+                    'assistance': message.speaker == _Speaker.learner
+                        ? 'none'
+                        : 'modelled',
+                  }),
+                )
+                .toList(),
             utterance: userUtterance,
             latencySec: latency,
           );
@@ -171,18 +200,31 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
       setState(() {
         _isSending = false;
         _isSpeaking = true;
-        _messages.add(_Message(_Speaker.tutor, turn.reply));
-        _tutorTurns.add(turn.reply);
+        _messages.add(
+          _Message(
+            _Speaker.tutor,
+            turn.reply,
+            responseMode: turn.responseMode,
+          ),
+        );
       });
 
-      WebVoiceService.instance.speak(turn.reply, langCode: 'de-DE');
+      final speechStarted = await WebVoiceService.instance.speak(
+        turn.reply,
+        langCode: 'de-DE',
+      );
 
-      final speechMs = (turn.reply.length * 52).clamp(1800, 4800);
-      Future.delayed(Duration(milliseconds: speechMs), () {
-        if (mounted) {
-          setState(() => _isSpeaking = false);
-        }
-      });
+      if (speechStarted) {
+        final speechMs = (turn.reply.length * 52).clamp(1800, 4800);
+        Future.delayed(Duration(milliseconds: speechMs), () {
+          if (mounted) setState(() => _isSpeaking = false);
+        });
+      } else {
+        setState(() {
+          _isSpeaking = false;
+          _error = WebVoiceService.instance.speechUnavailableReason;
+        });
+      }
     } on Failure catch (e) {
       if (!mounted) return;
       setState(() {
@@ -213,12 +255,16 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
           child: Align(
             alignment: Alignment.bottomCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: TlSpace.maxContentWidth),
+              constraints: const BoxConstraints(
+                maxWidth: TlSpace.maxContentWidth,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: colors.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
                   border: Border(top: BorderSide(color: colors.border)),
                 ),
                 child: Column(
@@ -236,7 +282,9 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                       style: ctx.type.body,
                       decoration: InputDecoration(
                         hintText: 'Antwort auf Deutsch eingeben…',
-                        hintStyle: ctx.type.body.copyWith(color: colors.textMuted),
+                        hintStyle: ctx.type.body.copyWith(
+                          color: colors.textMuted,
+                        ),
                         filled: true,
                         fillColor: colors.surfaceRaised,
                         border: OutlineInputBorder(
@@ -263,7 +311,9 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
                           foregroundColor: colors.onAccent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                         child: const Text('Send reply'),
                       ),
@@ -288,12 +338,16 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
         return Align(
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: TlSpace.maxContentWidth),
+            constraints: const BoxConstraints(
+              maxWidth: TlSpace.maxContentWidth,
+            ),
             child: Container(
               height: MediaQuery.sizeOf(ctx).height * 0.75,
               decoration: BoxDecoration(
                 color: colors.canvas,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 border: Border(top: BorderSide(color: colors.border)),
               ),
               child: Column(
@@ -328,9 +382,13 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                   ),
                   Expanded(
                     child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                       itemCount: _messages.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 16),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 16),
                       itemBuilder: (ctx, i) {
                         final msg = _messages[i];
                         final isUser = msg.speaker == _Speaker.learner;
@@ -343,9 +401,19 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                                 fontSize: 10,
                                 letterSpacing: 1.2,
                                 fontWeight: FontWeight.w700,
-                                color: isUser ? colors.primary : TlPalette.brassGold,
+                                color: isUser
+                                    ? colors.primary
+                                    : TlPalette.brassGold,
                               ),
                             ),
+                            if (!isUser &&
+                                msg.responseMode == 'template_fallback')
+                              Text(
+                                'Practice reply · template fallback',
+                                style: ctx.type.caption.copyWith(
+                                  color: colors.textMuted,
+                                ),
+                              ),
                             const SizedBox(height: 4),
                             Text(
                               msg.text,
@@ -381,12 +449,12 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
             culturalNotes: const [],
           )
         : (lesson?.conversation ??
-            const ConversationPlan(
-              role: 'German Native Tutor',
-              situation: 'Daily Conversation',
-              hiddenTargets: [],
-              culturalNotes: [],
-            ));
+              const ConversationPlan(
+                role: 'German Native Tutor',
+                situation: 'Daily Conversation',
+                hiddenTargets: [],
+                culturalNotes: [],
+              ));
 
     final themePillLabel = _currentTheme != null
         ? _currentTheme!.title
@@ -400,9 +468,10 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
     final statusLabel = switch (true) {
       _ when _isSending => 'Thinking…',
       _ when _isSpeaking => 'Speaking…',
-      _ when _isRecording => _liveTranscript.isNotEmpty
-          ? '"$_liveTranscript"'
-          : 'Listening… speak now',
+      _ when _isRecording =>
+        _liveTranscript.isNotEmpty
+            ? '"$_liveTranscript"'
+            : 'Listening… speak now',
       _ => 'Ready when you are',
     };
 
@@ -424,7 +493,10 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.surfaceRaised,
                       borderRadius: BorderRadius.circular(20),
@@ -505,10 +577,12 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
                     _isRecording && _liveTranscript.isNotEmpty
-                        ? 'Translating your speech…'
-                        : (_messages.isNotEmpty && _messages.last.speaker == _Speaker.tutor && _messages.last.translation != null
-                            ? _messages.last.translation!
-                            : 'Listening in real-time…'),
+                        ? 'Listening…'
+                        : (_messages.isNotEmpty &&
+                                  _messages.last.speaker == _Speaker.tutor
+                              ? (_messages.last.translation ??
+                                    'Translation is not available for this reply.')
+                              : 'Your partner’s meaning will appear here when available.'),
                     textAlign: TextAlign.center,
                     style: context.type.body.copyWith(
                       color: colors.textSecondary,
@@ -608,7 +682,9 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: TlPalette.brassGold.withValues(alpha: 0.45),
+                              color: TlPalette.brassGold.withValues(
+                                alpha: 0.45,
+                              ),
                               blurRadius: 18,
                               offset: const Offset(0, 6),
                             ),
@@ -664,7 +740,9 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
 
               // State hint
               Text(
-                _isRecording ? 'Listening… tap orb to finish' : 'Microphone off',
+                _isRecording
+                    ? 'Listening… tap orb to finish'
+                    : 'Microphone off',
                 style: context.type.caption.copyWith(
                   fontSize: 12,
                   color: colors.textMuted,
@@ -706,7 +784,11 @@ class TalkCanvasScreenState extends ConsumerState<TalkCanvasScreen>
                         SnackBar(
                           content: Row(
                             children: [
-                              const Icon(LucideIcons.sparkles, size: 16, color: TlPalette.brassGold),
+                              const Icon(
+                                LucideIcons.sparkles,
+                                size: 16,
+                                color: TlPalette.brassGold,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(

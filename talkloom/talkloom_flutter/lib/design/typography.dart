@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// The complete type scale. Nothing outside this file may declare a `fontSize`.
 ///
@@ -64,7 +63,8 @@ class TlTypography extends ThemeExtension<TlTypography> {
       Color color, {
       double? spacing,
       double height = 1.3,
-    }) => GoogleFonts.plusJakartaSans(
+    }) => TextStyle(
+      fontFamily: 'PlusJakartaSans',
       fontSize: size,
       fontWeight: weight,
       letterSpacing: spacing,
@@ -77,7 +77,8 @@ class TlTypography extends ThemeExtension<TlTypography> {
       FontWeight weight,
       Color color, {
       double height = 1.5,
-    }) => GoogleFonts.inter(
+    }) => TextStyle(
+      fontFamily: 'Inter',
       fontSize: size,
       fontWeight: weight,
       height: height,
@@ -85,18 +86,19 @@ class TlTypography extends ThemeExtension<TlTypography> {
     );
 
     return TlTypography(
-      display: jakarta(
-        32,
-        FontWeight.w800,
-        primary,
-        spacing: -0.8,
+      display: TextStyle(
+        fontFamily: 'Newsreader',
+        fontSize: 36,
+        fontWeight: FontWeight.w500,
+        color: primary,
         height: 1.15,
+        letterSpacing: -0.8,
       ),
-      headline: jakarta(
-        24,
-        FontWeight.w800,
-        primary,
-        spacing: -0.5,
+      headline: TextStyle(
+        fontFamily: 'Newsreader',
+        fontSize: 28,
+        fontWeight: FontWeight.w500,
+        color: primary,
         height: 1.2,
       ),
       titleLarge: jakarta(20, FontWeight.w700, primary, spacing: -0.3),
@@ -120,7 +122,8 @@ class TlTypography extends ThemeExtension<TlTypography> {
         height: 1.2,
       ),
       caption: inter(12, FontWeight.w500, secondary, height: 1.35),
-      numeric: GoogleFonts.plusJakartaSans(
+      numeric: TextStyle(
+        fontFamily: 'PlusJakartaSans',
         fontSize: 18,
         fontWeight: FontWeight.w800,
         color: primary,

@@ -1,0 +1,137 @@
+{
+  "version": 2,
+  "installations": {
+    "generic": {
+      "package:serverpod": {
+        "skills": [
+          {
+            "name": "serverpod-auth",
+            "installedAt": "2026-10-06T19:33:47.738557Z",
+            "contentHash": "u2v5X/zN3UD9foeQ7D7d0Q==",
+            "path": "skills/serverpod-auth"
+          },
+          {
+            "name": "serverpod-caching",
+            "installedAt": "2026-10-06T19:33:47.741064Z",
+            "contentHash": "I54rutBk+moFdPQf2oco2Q==",
+            "path": "skills/serverpod-caching"
+          },
+          {
+            "name": "serverpod-configuration",
+            "installedAt": "2026-10-06T19:33:47.753036Z",
+            "contentHash": "2ymgeSzsntCN0fWQHDoJwg==",
+            "path": "skills/serverpod-configuration"
+          },
+          {
+            "name": "serverpod-database",
+            "installedAt": "2026-10-06T19:33:47.757052Z",
+            "contentHash": "g1gmuOnrsH0XcfW4JDhY9Q==",
+            "path": "skills/serverpod-database"
+          },
+          {
+            "name": "serverpod-deployment",
+            "installedAt": "2026-10-06T19:33:47.761089Z",
+            "contentHash": "nUhj/FK7jSfYuhw8xZRdOg==",
+            "path": "skills/serverpod-deployment"
+          },
+          {
+            "name": "serverpod-endpoints",
+            "installedAt": "2026-10-06T19:33:47.763556Z",
+            "contentHash": "WzNRaxk5Y98V2rNSpJoNoQ==",
+            "path": "skills/serverpod-endpoints"
+          },
+          {
+            "name": "serverpod-file-uploads",
+            "installedAt": "2026-10-06T19:33:47.769488Z",
+            "contentHash": "rc57BPJ4RExXKF94xJDvPw==",
+            "path": "skills/serverpod-file-uploads"
+          },
+          {
+            "name": "serverpod-flutter-frontend",
+            "installedAt": "2026-10-06T19:33:47.773487Z",
+            "contentHash": "jv1TR+wDHwkBArvLTg2jDA==",
+            "path": "skills/serverpod-flutter-frontend"
+          },
+          {
+            "name": "serverpod-health-checks",
+            "installedAt": "2026-10-06T19:33:47.778Z",
+            "contentHash": "iWEKi3XtCYO5fs427Myz3w==",
+            "path": "skills/serverpod-health-checks"
+          },
+          {
+            "name": "serverpod-logging",
+            "installedAt": "2026-10-06T19:33:47.780998Z",
+            "contentHash": "GxHJfqlCgplPWLBZRAakXA==",
+            "path": "skills/serverpod-logging"
+          },
+          {
+            "name": "serverpod-migrations",
+            "installedAt": "2026-10-06T19:33:47.784999Z",
+            "contentHash": "0hYlBwapr4beOgX/AvV9Pg==",
+            "path": "skills/serverpod-migrations"
+          },
+          {
+            "name": "serverpod-models",
+            "installedAt": "2026-10-06T19:33:47.793510Z",
+            "contentHash": "3Zwv5UJZW8UAfDlW1Vx2bg==",
+            "path": "skills/serverpod-models"
+          },
+          {
+            "name": "serverpod-modules",
+            "installedAt": "2026-10-06T19:33:47.795510Z",
+            "contentHash": "xk/XinyrYLdjMXEoTjENeg==",
+            "path": "skills/serverpod-modules"
+          },
+          {
+            "name": "serverpod-overview",
+            "installedAt": "2026-10-06T19:33:47.799046Z",
+            "contentHash": "T9RxkFbcugpwDaPKhmNvnA==",
+            "path": "skills/serverpod-overview"
+          },
+          {
+            "name": "serverpod-scheduling",
+            "installedAt": "2026-10-06T19:33:47.803071Z",
+            "contentHash": "srZBG4BdDka1HsV1Ge7A7Q==",
+            "path": "skills/serverpod-scheduling"
+          },
+          {
+            "name": "serverpod-server-events",
+            "installedAt": "2026-10-06T19:33:47.806075Z",
+            "contentHash": "hgKVZJDNwQK7utHN9Na5kQ==",
+            "path": "skills/serverpod-server-events"
+          },
+          {
+            "name": "serverpod-sessions",
+            "installedAt": "2026-10-06T19:33:47.809655Z",
+            "contentHash": "8ft0Qsj9A6OMIf/0J+fgzQ==",
+            "path": "skills/serverpod-sessions"
+          },
+          {
+            "name": "serverpod-streams",
+            "installedAt": "2026-10-06T19:33:47.813655Z",
+            "contentHash": "/KH/kl1f5t5niDgicYbQLQ==",
+            "path": "skills/serverpod-streams"
+          },
+          {
+            "name": "serverpod-testing",
+            "installedAt": "2026-10-06T19:33:47.820163Z",
+            "contentHash": "77L7Nsw0fYhSjlMrz6Gp4w==",
+            "path": "skills/serverpod-testing"
+          },
+          {
+            "name": "serverpod-upgrading",
+            "installedAt": "2026-10-06T19:33:47.823171Z",
+            "contentHash": "+PcrpWCvyYEo/mIfXc4xTQ==",
+            "path": "skills/serverpod-upgrading"
+          },
+          {
+            "name": "serverpod-webserver",
+            "installedAt": "2026-10-06T19:33:47.833201Z",
+            "contentHash": "dmEXC7lAt806bpZEXAnE3A==",
+            "path": "skills/serverpod-webserver"
+          }
+        ]
+      }
+    }
+  }
+}

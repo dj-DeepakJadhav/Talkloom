@@ -1,92 +1,106 @@
-# Talkloom: Learn Your Language From Anything. Then Speak About It.
-> **Don't save it. Learn it. Speak it.**
+# Talkloom
 
-**Target Hackathon:** Nebius x NVIDIA Global AI Hackathon  
-**Track:** Best Apps & Agents Track  
-**Special Prize Target:** Best Use of Tavily ($3,000)  
-**Tech Stack:** Serverpod 4 (Dart backend & ORM), Flutter (Mobile & Web), Nebius Token Factory & Serverless Jobs, NVIDIA Nemotron, Tavily Context Grounding.
+Talkloom helps German learners turn their own videos, links, text and documents
+into material they can speak about. It is a mobile-first Flutter app with a
+Serverpod 4 backend and a Web companion. It is designed around a simple path:
+bring something you want to understand, review its words and grammar, then use
+the material in a conversation.
 
----
+## Current status
 
-## 🚀 Architecture Overview
+The current repository includes the Flutter shell, source-linked vocabulary and
+grammar views, Serverpod endpoints and models, URL/text/media ingestion paths,
+and a generated Serverpod client. On 6 October 2026, the local checks passed:
+31 backend tests, 11 Flutter tests, both analyzers, Web and Android builds, and a
+Docker image build. These checks do not yet prove a deployed, authenticated
+import-to-speaking experience on a physical device. See
+[`Docs/fix_tickets_2026-10-06.md`](Docs/fix_tickets_2026-10-06.md) and
+[`Docs/application_audit_2026-10-05.md`](Docs/application_audit_2026-10-05.md)
+for open acceptance gates.
 
-```
-                      ┌────────────────────────────────────────┐
-                      │        Talkloom Flutter Client         │
-                      │  (Astryx Tokens + Lucide + Agent HUD)  │
-                      └──────────────────┬─────────────────────┘
-                                         │ WebSocket / HTTP
-                                         ▼
-                      ┌────────────────────────────────────────┐
-                      │           Serverpod 4 Backend          │
-                      │       PostgreSQL Relational ORM        │
-                      └────┬───────────────┬────────────────┬──┘
-                           │               │                │
-                           ▼               ▼                ▼
-     ┌────────────────────────┐  ┌──────────────────┐  ┌─────────────────┐
-     │ Nebius Token Factory   │  │ Tavily Grounding │  │ Nebius          │
-     │ (NVIDIA Nemotron LLM)  │  │ Search API       │  │ Serverless Jobs │
-     │ • Pedagogical Compiler │  │ • Culture & Law  │  │ • Batch Parsing │
-     │ • Adaptive Voice Agent │  │ • Local Context  │  │ • Transcription │
-     └────────────────────────┘  └──────────────────┘  └─────────────────┘
-```
+Qwen3-TTS self-hosting, Agent Reach, creator sharing, verified mastery, and
+production deployment are not represented as shipped functionality. Do not
+describe them as available until their tickets and verification gates close.
+Browser speech can use an installed browser voice where supported; native
+Android/iOS speech output remains a no-op implementation today.
 
----
+## Project layout
 
-## 🌟 Key Features Delivered
+- `talkloom/talkloom_flutter` — Flutter app for Android, iOS and Web.
+- `talkloom/talkloom_server` — Serverpod API, persistence, ingestion and AI
+  orchestration.
+- `talkloom/talkloom_client` — generated protocol client; do not edit directly.
+- `.github/workflows/ci.yml` — repository-root CI for analysis, tests and builds.
+- `Docs/` — product design, audit, ticket loop and demo/submission materials.
 
-1. **Universal Ingestion & Content-to-Lesson Pipeline:**
-   - Ingest YouTube video transcripts, rental contracts, PDFs, or pasted text.
-   - Ground truth extraction powered by **Tavily Search API** (e.g. German rental laws like Section 551 BGB, Kaution deposit limits, and Nebenkosten indices).
+## Run locally
 
-2. **Pedagogical Lesson Compiler (Tri-Provider: Google Gemini, Nebius Token Factory & NVIDIA NIM):**
-   - **Google Gemini** (`gemini-1.5-flash` / `gemini-2.5-flash`): Free tier via Google AI Studio (15 RPM / 1,500 daily requests) with structured JSON generation.
-   - **NVIDIA NIM direct API** (`nvidia/nemotron-3.5-lightning-30b-a3b`): Free developer tier via [build.nvidia.com](https://build.nvidia.com) (1,000 free inference credits on sign-up) using `https://integrate.api.nvidia.com/v1`.
-   - **Nebius Token Factory & NVIDIA Nemotron** (`nvidia/nemotron-3-8b-instruct`): Sovereign open-weights inference tailored for hackathon evaluation.
-   - Configurable in `talkloom_server/config/passwords.yaml` (`aiProvider: 'gemini'`, `'nvidia'`, or `'nebius'`).
-   - Compiles content into strict **Lesson DSL** JSON format with targeted objectives, vocabulary lemmas, grammar concepts, and speaking missions.
+Install Flutter 3.44.4 or later, Dart, and the Serverpod 4.0.3 CLI. From the
+workspace root:
 
-3. **Live Pedagogical Agent HUD (Judge Showcase):**
-   - Real-time telemetry displaying the agent's hidden teaching mission, active teaching tactic, cognitive load / speech latency detection, and instant recognition of spontaneously produced language targets.
-
-4. **Active Mastery Graph:**
-   - Visualizes the learner's vocabulary state transitioning from *Recognized* to *Spontaneously Produced* (isolated per target language following the Mural architectural design).
-
-5. **Sentence Builder Mini-Game:**
-   - Verifies passive syntax recognition before learners transition into live conversation.
-
-6. **Sustainable Unit Economics & Creator Smart Lesson Links:**
-   - Built-in community sponsor card layout and one-click shareable deep links for creators.
-
----
-
-## 🛠️ Setup & Running
-
-### Serverpod Backend
-```bash
-cd talkloom_server
-# Generate protocols and migrations
-serverpod generate
-serverpod create-migration
-# Run server
-dart bin/main.dart
+```powershell
+cd talkloom
+flutter pub get
+dart pub global activate serverpod_cli 4.0.3
+serverpod start
 ```
 
-### Running Unit & Pipeline Tests
-```bash
-cd talkloom_server
-dart test test/unit/pipeline_test.dart
+The backend expects its local database password in the untracked
+`talkloom_server/config/passwords.yaml`. Never commit that file or paste its
+contents into tickets or logs. To extract YouTube captions, install the Python
+dependency once from `talkloom/talkloom_server`:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r scripts/requirements.txt
 ```
 
-### Flutter Frontend
-```bash
-cd talkloom_flutter
-flutter run
-# Or Flutter Web
-flutter run -d chrome
+Set `TALKLOOM_PYTHON_EXECUTABLE` to the Python interpreter containing that
+dependency when running the server outside the development virtual environment.
+On a physical Android device, pass the reachable API host with
+`--dart-define=SERVER_URL=http://<computer-lan-ip>:8080/`.
+
+## Verify locally
+
+Run each command from the indicated package directory:
+
+```powershell
+# talkloom/talkloom_flutter
+flutter analyze
+flutter test
+flutter build web --release
+flutter build apk --debug
+
+# talkloom/talkloom_server
+dart analyze
+dart test
 ```
 
----
+The server tests use Serverpod's local embedded test database. iOS compilation
+requires macOS and Xcode:
 
-## 📜 License
-MIT License. Open source for the Nebius x NVIDIA Hackathon 2026.
+```sh
+cd talkloom/talkloom_flutter
+flutter build ios --debug --no-codesign
+```
+
+CI runs on pushes and pull requests to `main`. It runs the Flutter and Serverpod
+checks, Web and Android builds, an unsigned iOS compile, and a backend container
+build. The container can be built manually from the repository root:
+
+```sh
+docker build -f talkloom/talkloom_server/Dockerfile -t talkloom-server .
+```
+
+## Production configuration
+
+Production is not deployed from this repository yet. Serverpod configuration
+values can be overridden with environment variables; configure the public API,
+Insights and Web hosts, database connection, secrets, allowed browser origins,
+and the Flutter `SERVER_URL` for the actual environment before deployment. The
+`examplepod.com` values in the sample production YAML are placeholders, not live
+hosts. See the [Serverpod configuration reference](https://docs.serverpod.dev/concepts/lookups/configuration-reference).
+
+## License
+
+No license has been selected or added to the repository yet.

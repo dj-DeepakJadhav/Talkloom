@@ -144,8 +144,11 @@ class _VoiceArenaScreenState extends ConsumerState<VoiceArenaScreen> {
     if (userUtterance.isEmpty) return;
 
     final session = ref.read(learningSessionProvider);
-    final latency = (DateTime.now().difference(_turnStart).inMilliseconds / 1000.0)
-        .clamp(0.5, 20.0);
+    final latency =
+        (DateTime.now().difference(_turnStart).inMilliseconds / 1000.0).clamp(
+          0.5,
+          20.0,
+        );
 
     setState(() {
       _messages.add(_Message(_Speaker.learner, userUtterance));
@@ -156,7 +159,9 @@ class _VoiceArenaScreenState extends ConsumerState<VoiceArenaScreen> {
     _scrollToBottom();
 
     try {
-      final turn = await ref.read(lessonRepositoryProvider).speak(
+      final turn = await ref
+          .read(lessonRepositoryProvider)
+          .speak(
             session: session,
             role: plan.role,
             situation: plan.situation,
@@ -214,17 +219,18 @@ class _VoiceArenaScreenState extends ConsumerState<VoiceArenaScreen> {
             culturalNotes: const [],
           )
         : (lesson?.conversation ??
-            const ConversationPlan(
-              role: 'German Native Tutor',
-              situation: 'Daily Conversation',
-              hiddenTargets: [],
-              culturalNotes: [],
-            ));
+              const ConversationPlan(
+                role: 'German Native Tutor',
+                situation: 'Daily Conversation',
+                hiddenTargets: [],
+                culturalNotes: [],
+              ));
 
     final statusText = switch (_orbState) {
-      VoiceOrbState.listening => _liveTranscript.isNotEmpty
-          ? '"$_liveTranscript"'
-          : 'Listening… speak in German',
+      VoiceOrbState.listening =>
+        _liveTranscript.isNotEmpty
+            ? '"$_liveTranscript"'
+            : 'Listening… speak in German',
       VoiceOrbState.thinking => 'Thinking…',
       VoiceOrbState.speaking => 'Tutor speaking…',
       VoiceOrbState.idle => 'Tap the orb to speak',
@@ -427,7 +433,9 @@ class _VoiceArenaScreenState extends ConsumerState<VoiceArenaScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: context.type.caption.copyWith(
                       color: _isRecording ? colors.primary : colors.textMuted,
-                      fontWeight: _isRecording ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: _isRecording
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                       fontSize: 12,
                     ),
                   ),

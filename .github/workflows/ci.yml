@@ -1,0 +1,81 @@
+name: Talkloom CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+      - name: Resolve workspace packages
+        working-directory: talkloom/talkloom_flutter
+        run: flutter pub get
+      - name: Analyze Flutter
+        working-directory: talkloom/talkloom_flutter
+        run: flutter analyze
+      - name: Test Flutter
+        working-directory: talkloom/talkloom_flutter
+        run: flutter test
+      - name: Build Web release
+        working-directory: talkloom/talkloom_flutter
+        run: flutter build web --release
+      - name: Build Android debug APK
+        working-directory: talkloom/talkloom_flutter
+        run: flutter build apk --debug
+
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+      - name: Resolve workspace packages
+        working-directory: talkloom
+        run: dart pub get
+      - name: Analyze Serverpod
+        working-directory: talkloom/talkloom_server
+        run: dart analyze
+      - name: Test Serverpod
+        working-directory: talkloom/talkloom_server
+        run: dart test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate YouTube extractor runtime
+        working-directory: talkloom/talkloom_server
+        run: |
+          python -m pip install -r scripts/requirements.txt
+          python -m py_compile scripts/extract_youtube.py
+      - name: Build Serverpod container
+        run: docker build -f talkloom/talkloom_server/Dockerfile -t talkloom-server:ci .
+
+  ios-compile:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+      - name: Resolve workspace packages
+        working-directory: talkloom/talkloom_flutter
+        run: flutter pub get
+      - name: Compile iOS without signing
+        working-directory: talkloom/talkloom_flutter
+        run: flutter build ios --debug --no-codesign

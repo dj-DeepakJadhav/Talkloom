@@ -39,7 +39,8 @@ class ImmersiveVoiceModal extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<ImmersiveVoiceModal> createState() => _ImmersiveVoiceModalState();
+  ConsumerState<ImmersiveVoiceModal> createState() =>
+      _ImmersiveVoiceModalState();
 }
 
 class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
@@ -133,8 +134,11 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
     if (userUtterance.isEmpty) return;
 
     final session = ref.read(learningSessionProvider);
-    final latency = (DateTime.now().difference(_turnStart).inMilliseconds / 1000.0)
-        .clamp(0.5, 20.0);
+    final latency =
+        (DateTime.now().difference(_turnStart).inMilliseconds / 1000.0).clamp(
+          0.5,
+          20.0,
+        );
 
     setState(() {
       _messages.add(_Message(_Speaker.learner, userUtterance));
@@ -144,7 +148,9 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
     _scrollToBottom();
 
     try {
-      final turn = await ref.read(lessonRepositoryProvider).speak(
+      final turn = await ref
+          .read(lessonRepositoryProvider)
+          .speak(
             session: session,
             role: plan.role,
             situation: plan.situation,
@@ -186,7 +192,8 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final activeLesson = ref.watch(activeLessonProvider);
-    final plan = activeLesson?.conversation ??
+    final plan =
+        activeLesson?.conversation ??
         const ConversationPlan(
           role: 'German Native Tutor',
           situation: 'Daily Conversation',
@@ -195,9 +202,10 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
         );
 
     final statusText = switch (_orbState) {
-      VoiceOrbState.listening => _liveTranscript.isNotEmpty
-          ? '"$_liveTranscript"'
-          : 'Listening… speak now',
+      VoiceOrbState.listening =>
+        _liveTranscript.isNotEmpty
+            ? '"$_liveTranscript"'
+            : 'Listening… speak now',
       VoiceOrbState.thinking => 'Formulating response…',
       VoiceOrbState.speaking => 'Tutor speaking…',
       VoiceOrbState.idle => 'Tap the pulsing orb to speak',
@@ -231,159 +239,171 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
                 // Top Bar: Persona Pill + Close
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceRaised,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: colors.border),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.sparkles,
-                          size: 14,
-                          color: TlPalette.brassGold,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          plan.role,
-                          style: context.type.labelSmall.copyWith(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w700,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceRaised,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: colors.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              LucideIcons.sparkles,
+                              size: 14,
+                              color: TlPalette.brassGold,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              plan.role,
+                              style: context.type.labelSmall.copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      TlPressable(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceRaised,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            LucideIcons.x,
+                            size: 16,
+                            color: colors.textMuted,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  TlPressable(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceRaised,
-                        shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        LucideIcons.x,
-                        size: 16,
-                        color: colors.textMuted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Main Conversation Stream (me speaking to AI)
-            Expanded(
-              child: ListView.builder(
-                controller: _scroll,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: _messages.length + (_isSending ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index >= _messages.length) {
-                    return Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: TlSkeleton(
-                          height: 38,
-                          width: 140,
-                          radius: TlRadius.md,
-                        ),
-                      ),
-                    );
-                  }
-
-                  final message = _messages[index];
-                  final isLearner = message.speaker == _Speaker.learner;
-
-                  return Align(
-                    alignment: isLearner
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Container(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.sizeOf(context).width * 0.82,
-                      ),
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isLearner
-                            ? colors.primary
-                            : colors.surfaceRaised,
-                        borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(16),
-                          topRight: const Radius.circular(16),
-                          bottomLeft: Radius.circular(isLearner ? 16 : 4),
-                          bottomRight: Radius.circular(isLearner ? 4 : 16),
-                        ),
-                        border: isLearner
-                            ? null
-                            : Border.all(
-                                color: colors.border.withValues(alpha: 0.6),
-                              ),
-                      ),
-                      child: _buildMessageContent(message, isLearner, colors),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Live Speech Status Subtitle
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  statusText,
-                  key: ValueKey(statusText),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.caption.copyWith(
-                    color: _isRecording ? colors.primary : colors.textMuted,
-                    fontWeight: _isRecording ? FontWeight.w600 : FontWeight.w500,
+                    ],
                   ),
                 ),
-              ),
-            ),
 
-            // Bottom Center Pulsating Voice Orb
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14, top: 2),
-              child: TlPressable(
-                onTap: () {
-                  if (_isRecording) {
-                    _stopAndSend(plan);
-                  } else if (!_isSending && !_isSpeaking) {
-                    _startListening();
-                  }
-                },
-                child: FluidVoiceOrb(
-                  state: _orbState,
-                  size: 46, // Proportional compact pulsating icon
+                // Main Conversation Stream (me speaking to AI)
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scroll,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    itemCount: _messages.length + (_isSending ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index >= _messages.length) {
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: TlSkeleton(
+                              height: 38,
+                              width: 140,
+                              radius: TlRadius.md,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final message = _messages[index];
+                      final isLearner = message.speaker == _Speaker.learner;
+
+                      return Align(
+                        alignment: isLearner
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Container(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width * 0.82,
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isLearner
+                                ? colors.primary
+                                : colors.surfaceRaised,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: Radius.circular(isLearner ? 16 : 4),
+                              bottomRight: Radius.circular(isLearner ? 4 : 16),
+                            ),
+                            border: isLearner
+                                ? null
+                                : Border.all(
+                                    color: colors.border.withValues(alpha: 0.6),
+                                  ),
+                          ),
+                          child: _buildMessageContent(
+                            message,
+                            isLearner,
+                            colors,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
+
+                // Live Speech Status Subtitle
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 6,
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      statusText,
+                      key: ValueKey(statusText),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.type.caption.copyWith(
+                        color: _isRecording ? colors.primary : colors.textMuted,
+                        fontWeight: _isRecording
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Bottom Center Pulsating Voice Orb
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14, top: 2),
+                  child: TlPressable(
+                    onTap: () {
+                      if (_isRecording) {
+                        _stopAndSend(plan);
+                      } else if (!_isSending && !_isSpeaking) {
+                        _startListening();
+                      }
+                    },
+                    child: FluidVoiceOrb(
+                      state: _orbState,
+                      size: 46, // Proportional compact pulsating icon
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildMessageContent(

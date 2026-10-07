@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../../core/platform/web_voice_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -9,6 +11,7 @@ import '../../design/components/tl_surface.dart';
 import '../../design/theme.dart';
 import '../../domain/lesson_content.dart';
 import 'activity_view.dart';
+import '../shell/talkloom_navigation_bar.dart';
 
 /// Walks the learner through the targets, vocabulary with audio prompts,
 /// sentence builder mini-games, and speaking mission.
@@ -33,66 +36,29 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final lesson = ref.watch(activeLessonProvider) ??
-        const LessonContent(
-          lessonId: 0,
-          objectives: ['Master German subordinate clause word order (Weil / Dass)'],
-          vocabulary: [
-            VocabularyItem(
-              id: 'kaution',
-              lemma: 'Kaution',
-              article: 'die',
-              meaning: 'security deposit',
-              sourceContext: 'Die Kaution beträgt 3 Monatskaltmieten.',
-            ),
-            VocabularyItem(
-              id: 'mietvertrag',
-              lemma: 'Mietvertrag',
-              article: 'der',
-              meaning: 'rental lease contract',
-              sourceContext: 'Der Mietvertrag ist ab sofort gültig.',
-            ),
-          ],
-          activities: [
-            SentenceBuilderActivity(
-              target: 'Ich zahle die Kaution, weil der Mietvertrag gültig ist.',
-              scrambledTokens: [
-                'Ich',
-                'zahle',
-                'die',
-                'Kaution,',
-                'weil',
-                'der',
-                'Mietvertrag',
-                'gültig',
-                'ist.',
-              ],
-            ),
-            ContextChoiceActivity(
-              question: 'Welche Präposition erfordert Dativ bei einer Ortsangabe?',
-              options: [
-                'auf dem Tisch (Wo?)',
-                'auf den Tisch (Wohin?)',
-                'durch das Zimmer',
-                'für den Mieter',
-              ],
-              correctIndex: 0,
-              targets: ['auf dem Tisch'],
-            ),
-          ],
-          conversation: ConversationPlan(
-            role: 'Landlord / Vermieter',
-            situation: 'Reviewing tenancy deposit terms in Berlin',
-            hiddenTargets: ['die Kaution', 'der Mietvertrag'],
-            culturalNotes: ['Germans expect formal Sie form in legal agreements'],
-          ),
-        );
+    final lesson = ref.watch(activeLessonProvider);
+    if (lesson == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Practice')),
+        bottomNavigationBar: TalkloomNavigationBar(
+          selectedIndex: 1,
+          onDestinationSelected: (index) => context.go('/?tab=$index'),
+        ),
+        body: const Center(
+          child: Text('Open your shared content to start a practice.'),
+        ),
+      );
+    }
 
     final activities = lesson.activities;
     final total = activities.isEmpty ? 1 : activities.length;
     final progress = (_index + 1) / total;
 
     return Scaffold(
+      bottomNavigationBar: TalkloomNavigationBar(
+        selectedIndex: 1,
+        onDestinationSelected: (index) => context.go('/?tab=$index'),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -157,15 +123,27 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (ref.watch(selectedSourceProvider)
+                            case final source?) ...[
+                          Text(
+                            'From ${source.title}',
+                            style: context.type.caption,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         // Targets & Objectives Card (rendered if first step or always accessible)
                         if (_index == 0) ...[
                           _ObjectivesCard(lesson: lesson),
                           const SizedBox(height: TlSpace.md),
                           if (lesson.vocabulary.isNotEmpty) ...[
-                            _VocabularyAudioSection(vocabulary: lesson.vocabulary),
+                            _VocabularyAudioSection(
+                              vocabulary: lesson.vocabulary,
+                            ),
                             const SizedBox(height: TlSpace.md),
                           ],
-                          _SpeakingMissionBanner(conversation: lesson.conversation),
+                          _SpeakingMissionBanner(
+                            conversation: lesson.conversation,
+                          ),
                           const SizedBox(height: TlSpace.lg),
                         ],
 
@@ -276,16 +254,25 @@ class _ObjectivesCardState extends State<_ObjectivesCard> {
               ),
               const SizedBox(height: TlSpace.xs),
               if (lesson.objectives.isEmpty)
-                Text('Master essential syntax and key vocabulary from this video/source.', style: context.type.bodySmall)
+                Text(
+                  'Master essential syntax and key vocabulary from this video/source.',
+                  style: context.type.bodySmall,
+                )
               else
                 ...lesson.objectives.map(
                   (obj) => Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Row(
                       children: [
-                        Icon(LucideIcons.checkCircle2, size: 14, color: colors.success),
+                        Icon(
+                          LucideIcons.checkCircle2,
+                          size: 14,
+                          color: colors.success,
+                        ),
                         const SizedBox(width: 6),
-                        Expanded(child: Text(obj, style: context.type.bodySmall)),
+                        Expanded(
+                          child: Text(obj, style: context.type.bodySmall),
+                        ),
                       ],
                     ),
                   ),
@@ -293,10 +280,12 @@ class _ObjectivesCardState extends State<_ObjectivesCard> {
             ],
           ),
         ),
-        if (lesson.vocabulary.isNotEmpty && lesson.vocabulary.any((v) => v.sourceContext.isNotEmpty)) ...[
+        if (lesson.vocabulary.isNotEmpty &&
+            lesson.vocabulary.any((v) => v.sourceContext.isNotEmpty)) ...[
           const SizedBox(height: TlSpace.sm),
           TlPressable(
-            onTap: () => setState(() => _expandedTranscript = !_expandedTranscript),
+            onTap: () =>
+                setState(() => _expandedTranscript = !_expandedTranscript),
             child: TlCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,10 +294,15 @@ class _ObjectivesCardState extends State<_ObjectivesCard> {
                     children: [
                       Icon(LucideIcons.fileText, size: 16, color: colors.info),
                       const SizedBox(width: 8),
-                      Text('Source Context & Lines', style: context.type.bodyStrong),
+                      Text(
+                        'Source Context & Lines',
+                        style: context.type.bodyStrong,
+                      ),
                       const Spacer(),
                       Icon(
-                        _expandedTranscript ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                        _expandedTranscript
+                            ? LucideIcons.chevronUp
+                            : LucideIcons.chevronDown,
                         size: 16,
                         color: colors.textMuted,
                       ),
@@ -321,7 +315,9 @@ class _ObjectivesCardState extends State<_ObjectivesCard> {
                       style: context.type.caption,
                     ),
                     const SizedBox(height: TlSpace.xs),
-                    for (final item in lesson.vocabulary.where((v) => v.sourceContext.isNotEmpty)) ...[
+                    for (final item in lesson.vocabulary.where(
+                      (v) => v.sourceContext.isNotEmpty,
+                    )) ...[
                       Container(
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.all(8),
@@ -335,12 +331,17 @@ class _ObjectivesCardState extends State<_ObjectivesCard> {
                           children: [
                             Text(
                               '• ',
-                              style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: colors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Expanded(
                               child: Text(
                                 item.sourceContext,
-                                style: context.type.bodySmall.copyWith(fontStyle: FontStyle.italic),
+                                style: context.type.bodySmall.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                             ),
                           ],
@@ -375,7 +376,7 @@ class _VocabularyAudioSection extends StatelessWidget {
             children: [
               Icon(LucideIcons.volume2, size: 18, color: colors.info),
               const SizedBox(width: 8),
-              Text('Target Vocabulary & Audio Prompts', style: context.type.title),
+              Text('Expressions from your content', style: context.type.title),
               const Spacer(),
               TlPill(
                 label: '${vocabulary.length} Words',
@@ -386,7 +387,7 @@ class _VocabularyAudioSection extends StatelessWidget {
           ),
           const SizedBox(height: TlSpace.xs),
           Text(
-            'Tap to hear authentic native pronunciation prompts:',
+            'Listen to the expressions from your content:',
             style: context.type.caption,
           ),
           const SizedBox(height: TlSpace.sm),
@@ -412,8 +413,15 @@ class _VocabularyItemRow extends StatefulWidget {
 class _VocabularyItemRowState extends State<_VocabularyItemRow> {
   bool _isPlaying = false;
 
-  void _playAudio() {
+  Future<void> _playAudio() async {
     if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+    final started = await WebVoiceService.instance.speak(
+      widget.item.display,
+      langCode: 'de-DE',
+    );
+    if (!mounted) return;
+    if (!started) { setState(() => _isPlaying = false); return; }
     setState(() => _isPlaying = true);
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) setState(() => _isPlaying = false);
@@ -425,7 +433,10 @@ class _VocabularyItemRowState extends State<_VocabularyItemRow> {
     final colors = context.colors;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: TlSpace.sm, vertical: TlSpace.xs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: TlSpace.sm,
+        vertical: TlSpace.xs,
+      ),
       decoration: BoxDecoration(
         color: _isPlaying ? colors.primarySoft : colors.surfaceSunken,
         borderRadius: TlRadius.controlRadius,
@@ -441,7 +452,9 @@ class _VocabularyItemRowState extends State<_VocabularyItemRow> {
               children: [
                 Text(
                   widget.item.display,
-                  style: context.type.bodyStrong.copyWith(color: colors.textPrimary),
+                  style: context.type.bodyStrong.copyWith(
+                    color: colors.textPrimary,
+                  ),
                 ),
                 Text(
                   widget.item.meaning,
@@ -456,7 +469,10 @@ class _VocabularyItemRowState extends State<_VocabularyItemRow> {
               size: 18,
               color: _isPlaying ? colors.primary : colors.textSecondary,
             ),
-            onPressed: _playAudio,
+            tooltip: 'Listen to this expression',
+            onPressed: WebVoiceService.instance.canSpeak
+                ? _playAudio
+                : null,
           ),
         ],
       ),
@@ -495,7 +511,9 @@ class _SpeakingMissionBanner extends StatelessWidget {
               children: [
                 Text(
                   'Upcoming Mission: ${conversation.role}',
-                  style: context.type.bodyStrong.copyWith(color: colors.primaryText),
+                  style: context.type.bodyStrong.copyWith(
+                    color: colors.primaryText,
+                  ),
                 ),
                 Text(
                   conversation.situation,

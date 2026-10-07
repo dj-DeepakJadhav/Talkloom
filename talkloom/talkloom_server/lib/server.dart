@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_cloud_storage/serverpod_cloud_storage.dart';
 
 import 'src/cache_busting.dart';
+import 'src/auth/merge_learning_data.dart';
 import 'src/generated/serverpod.dart';
 import 'src/web/routes/app_config_route.dart';
 
@@ -18,11 +20,15 @@ void run(List<String> args) async {
   // Token managers will be used to validate and issue authentication keys,
   // and the identity providers will be the authentication options available for users.
   pod.initializeAuthServices(
+    accountMergeConfig: AccountMergeConfig(
+      applicationMergeHandler: mergeLearningData,
+    ),
     tokenManagerBuilders: [
       // Use JWT for authentication keys towards the server.
       JwtConfigFromPasswords(),
     ],
     identityProviderBuilders: [
+      AnonymousIdpConfig(),
       // Configure the email identity provider for email/password authentication.
       // The default setup works with Serverpod Cloud without configuration. In
       // development the verification codes are logged to the console, and in

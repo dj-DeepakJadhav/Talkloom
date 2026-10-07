@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../design/components/tl_button.dart';
 import '../../design/components/tl_surface.dart';
 import '../../design/theme.dart';
+import '../../core/platform/web_voice_service.dart';
 import '../../domain/lesson_content.dart';
 
 /// Renders one activity. Adding a new activity type means adding a case here
@@ -104,7 +106,8 @@ class _AudioPronunciationButton extends StatefulWidget {
   final String text;
 
   @override
-  State<_AudioPronunciationButton> createState() => _AudioPronunciationButtonState();
+  State<_AudioPronunciationButton> createState() =>
+      _AudioPronunciationButtonState();
 }
 
 class _AudioPronunciationButtonState extends State<_AudioPronunciationButton>
@@ -127,8 +130,15 @@ class _AudioPronunciationButtonState extends State<_AudioPronunciationButton>
     super.dispose();
   }
 
-  void _playAudio() {
-    if (_isPlaying) return;
+  Future<void> _playAudio() async {
+    if (_isPlaying || !WebVoiceService.instance.canSpeak) return;
+    setState(() => _isPlaying = true);
+    final started = await WebVoiceService.instance.speak(
+      widget.text,
+      langCode: 'de-DE',
+    );
+    if (!mounted) return;
+    if (!started) { setState(() => _isPlaying = false); return; }
     HapticFeedback.lightImpact();
     setState(() => _isPlaying = true);
     _anim.repeat(reverse: true);
@@ -161,13 +171,13 @@ class _AudioPronunciationButtonState extends State<_AudioPronunciationButton>
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              _isPlaying ? LucideIcons.volume2 : LucideIcons.volumeX,
+              _isPlaying ? LucideIcons.volume2 : LucideIcons.volume1,
               size: 15,
               color: _isPlaying ? colors.primary : colors.textSecondary,
             ),
             const SizedBox(width: 4),
             Text(
-              _isPlaying ? 'Playing…' : 'Audio Prompt',
+              _isPlaying ? 'Playing…' : 'Listen',
               style: context.type.caption.copyWith(
                 color: _isPlaying ? colors.primary : colors.textSecondary,
                 fontWeight: FontWeight.w600,

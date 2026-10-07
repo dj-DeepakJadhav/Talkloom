@@ -23,7 +23,8 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required this.targetLanguage,
     required this.cefrLevel,
     required this.createdAt,
-  });
+    bool? isArchived,
+  }) : isArchived = isArchived ?? false;
 
   factory Source({
     int? id,
@@ -35,6 +36,7 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
     required String targetLanguage,
     required String cefrLevel,
     required DateTime createdAt,
+    bool? isArchived,
   }) = _SourceImpl;
 
   factory Source.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -50,6 +52,9 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
       createdAt: _is.DateTimeJsonExtension.fromJson(
         jsonSerialization['createdAt'],
       ),
+      isArchived: jsonSerialization['isArchived'] == null
+          ? null
+          : _is.BoolJsonExtension.fromJson(jsonSerialization['isArchived']),
     );
   }
 
@@ -76,6 +81,8 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
 
   DateTime createdAt;
 
+  bool isArchived;
+
   @override
   _is.Table<int?> get table => t;
 
@@ -92,6 +99,7 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
     String? targetLanguage,
     String? cefrLevel,
     DateTime? createdAt,
+    bool? isArchived,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -106,6 +114,7 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'targetLanguage': targetLanguage,
       'cefrLevel': cefrLevel,
       'createdAt': createdAt.toJson(),
+      'isArchived': isArchived,
     };
   }
 
@@ -122,6 +131,7 @@ abstract class Source implements _is.TableRow<int?>, _is.ProtocolSerialization {
       'targetLanguage': targetLanguage,
       'cefrLevel': cefrLevel,
       'createdAt': createdAt.toJson(),
+      'isArchived': isArchived,
     };
   }
 
@@ -166,6 +176,7 @@ class _SourceImpl extends Source {
     required String targetLanguage,
     required String cefrLevel,
     required DateTime createdAt,
+    bool? isArchived,
   }) : super._(
          id: id,
          userId: userId,
@@ -176,6 +187,7 @@ class _SourceImpl extends Source {
          targetLanguage: targetLanguage,
          cefrLevel: cefrLevel,
          createdAt: createdAt,
+         isArchived: isArchived,
        );
 
   /// Returns a shallow copy of this [Source]
@@ -192,6 +204,7 @@ class _SourceImpl extends Source {
     String? targetLanguage,
     String? cefrLevel,
     DateTime? createdAt,
+    bool? isArchived,
   }) {
     return Source(
       id: id is int? ? id : this.id,
@@ -203,6 +216,7 @@ class _SourceImpl extends Source {
       targetLanguage: targetLanguage ?? this.targetLanguage,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       createdAt: createdAt ?? this.createdAt,
+      isArchived: isArchived ?? this.isArchived,
     );
   }
 }
@@ -251,6 +265,11 @@ class SourceUpdateTable extends _is.UpdateTable<SourceTable> {
         table.createdAt,
         value,
       );
+
+  _is.ColumnValue<bool, bool> isArchived(bool value) => _is.ColumnValue(
+    table.isArchived,
+    value,
+  );
 }
 
 class SourceTable extends _is.Table<int?> {
@@ -288,6 +307,11 @@ class SourceTable extends _is.Table<int?> {
       'createdAt',
       this,
     );
+    isArchived = _is.ColumnBool(
+      'isArchived',
+      this,
+      hasDefault: true,
+    );
   }
 
   late final SourceUpdateTable updateTable;
@@ -308,6 +332,8 @@ class SourceTable extends _is.Table<int?> {
 
   late final _is.ColumnDateTime createdAt;
 
+  late final _is.ColumnBool isArchived;
+
   @override
   List<_is.Column> get columns => [
     id,
@@ -319,6 +345,7 @@ class SourceTable extends _is.Table<int?> {
     targetLanguage,
     cefrLevel,
     createdAt,
+    isArchived,
   ];
 }
 

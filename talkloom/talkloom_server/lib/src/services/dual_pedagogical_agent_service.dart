@@ -43,211 +43,209 @@ class DualPedagogicalAgentService {
     required double responseLatencySec,
     List<String>? culturalFacts,
   }) async {
-    // 1. Telemetry heuristics
-    final normalizedInput = learnerUtterance.toLowerCase();
-    String? detectedTarget;
-    bool spontaneous = false;
-
-    for (var target in hiddenTargets) {
-      final cleanTarget = target.contains(':') ? target.split(':')[1] : target;
-      if (normalizedInput.contains(cleanTarget.toLowerCase())) {
-        detectedTarget = cleanTarget;
-        spontaneous = true;
-        break;
-      }
+    final history = ConversationHistoryEntry.parseAll(previousTurns);
+    final recognizedTargets = <String>[];
+    final assistedTargets = <String>[];
+    for (final target in hiddenTargets) {
+      final cleanTarget = target.contains(':')
+          ? target.split(':').last
+          : target;
+      if (!_containsWholeTarget(learnerUtterance, cleanTarget)) continue;
+      recognizedTargets.add(cleanTarget);
+      if (_wasAssisted(history, cleanTarget)) assistedTargets.add(cleanTarget);
     }
+    final detectedTarget = recognizedTargets.isEmpty
+        ? null
+        : recognizedTargets.first;
+    final unassistedTarget =
+        detectedTarget != null && !assistedTargets.contains(detectedTarget)
+        ? detectedTarget
+        : null;
+    final spontaneous = unassistedTarget != null;
 
     final cognitiveLoad = responseLatencySec > 4.0
         ? 'High (Hesitant response)'
         : (responseLatencySec > 2.0
-            ? 'Moderate (Normal processing)'
-            : 'Low (Spontaneous recall)');
+              ? 'Moderate (Normal processing)'
+              : 'Low (Spontaneous recall)');
 
     final tactic = responseLatencySec > 3.5
         ? 'Simplify sentence structure and provide contextual encouragement'
         : (spontaneous
-            ? 'Acknowledge target usage naturally and introduce follow-up complexity'
-            : 'Formulate open natural question creating opening for remaining targets');
+              ? 'Acknowledge target usage naturally and introduce follow-up complexity'
+              : 'Formulate open natural question creating opening for remaining targets');
 
-    // 2. Dispatch to provider with cascading failover and explicit error logging
-    if (provider == AiProvider.nvidia && nvidiaApiKey.isNotEmpty) {
+    // Try the configured provider first, then one configured failover.
+    for (final candidate in _availableProviders()) {
       try {
-        print('[DualPedagogicalAgentService] Using NVIDIA NIM provider...');
-        final reply = await _generateNvidiaReply(
+        final reply = await _generateReplyFor(
+          candidate,
           targetLanguage: targetLanguage,
           role: role,
           situation: situation,
           hiddenTargets: hiddenTargets,
-          previousTurns: previousTurns,
+          previousTurns: history,
           learnerUtterance: learnerUtterance,
           tactic: tactic,
           cognitiveLoad: cognitiveLoad,
           culturalFacts: culturalFacts,
         );
         return PedagogicalAgentTelemetry(
-          activeMission: 'Elicit target expressions: ${hiddenTargets.join(", ")}',
+          activeMission:
+              'Elicit target expressions: ${hiddenTargets.join(", ")}',
           activeTactic: tactic,
           hiddenTargets: hiddenTargets,
-          elicitedTargets: detectedTarget != null ? [detectedTarget] : [],
+          elicitedTargets: spontaneous && detectedTarget != null
+              ? [detectedTarget]
+              : [],
           estimatedLatencySec: responseLatencySec,
           cognitiveLoad: cognitiveLoad,
           reply: reply,
           targetProducedSpontaneously: spontaneous,
-          detectedTarget: detectedTarget,
+          detectedTarget: unassistedTarget,
+          recognizedTargets: recognizedTargets,
+          assistedTargets: assistedTargets,
+          responseMode: candidate.name,
         );
-      } catch (e) {
-        print('[DualPedagogicalAgentService] NVIDIA error: $e');
-      }
-    }
-
-    if (provider == AiProvider.gemini && geminiApiKey.isNotEmpty) {
-      try {
-        print('[DualPedagogicalAgentService] Using Gemini provider...');
-        final reply = await _generateGeminiReply(
-          targetLanguage: targetLanguage,
-          role: role,
-          situation: situation,
-          hiddenTargets: hiddenTargets,
-          previousTurns: previousTurns,
-          learnerUtterance: learnerUtterance,
-          tactic: tactic,
-          cognitiveLoad: cognitiveLoad,
-          culturalFacts: culturalFacts,
-        );
-        return PedagogicalAgentTelemetry(
-          activeMission: 'Elicit target expressions: ${hiddenTargets.join(", ")}',
-          activeTactic: tactic,
-          hiddenTargets: hiddenTargets,
-          elicitedTargets: detectedTarget != null ? [detectedTarget] : [],
-          estimatedLatencySec: responseLatencySec,
-          cognitiveLoad: cognitiveLoad,
-          reply: reply,
-          targetProducedSpontaneously: spontaneous,
-          detectedTarget: detectedTarget,
-        );
-      } catch (e) {
-        print('[DualPedagogicalAgentService] Gemini error: $e');
-      }
-    }
-
-    // Failover to NVIDIA NIM if not already attempted
-    if (provider != AiProvider.nvidia && nvidiaApiKey.isNotEmpty) {
-      try {
-        print('[DualPedagogicalAgentService] Failover to NVIDIA NIM provider...');
-        final reply = await _generateNvidiaReply(
-          targetLanguage: targetLanguage,
-          role: role,
-          situation: situation,
-          hiddenTargets: hiddenTargets,
-          previousTurns: previousTurns,
-          learnerUtterance: learnerUtterance,
-          tactic: tactic,
-          cognitiveLoad: cognitiveLoad,
-          culturalFacts: culturalFacts,
-        );
-        return PedagogicalAgentTelemetry(
-          activeMission: 'Elicit target expressions: ${hiddenTargets.join(", ")}',
-          activeTactic: tactic,
-          hiddenTargets: hiddenTargets,
-          elicitedTargets: detectedTarget != null ? [detectedTarget] : [],
-          estimatedLatencySec: responseLatencySec,
-          cognitiveLoad: cognitiveLoad,
-          reply: reply,
-          targetProducedSpontaneously: spontaneous,
-          detectedTarget: detectedTarget,
-        );
-      } catch (e) {
-        print('[DualPedagogicalAgentService] NVIDIA error: $e');
-      }
-    }
-
-    if (nebiusApiKey.isNotEmpty) {
-      try {
-        print('[DualPedagogicalAgentService] Trying Nebius provider...');
-        final reply = await _generateNebiusReply(
-          targetLanguage: targetLanguage,
-          role: role,
-          situation: situation,
-          hiddenTargets: hiddenTargets,
-          previousTurns: previousTurns,
-          learnerUtterance: learnerUtterance,
-          tactic: tactic,
-          cognitiveLoad: cognitiveLoad,
-          culturalFacts: culturalFacts,
-        );
-        return PedagogicalAgentTelemetry(
-          activeMission: 'Elicit target expressions: ${hiddenTargets.join(", ")}',
-          activeTactic: tactic,
-          hiddenTargets: hiddenTargets,
-          elicitedTargets: detectedTarget != null ? [detectedTarget] : [],
-          estimatedLatencySec: responseLatencySec,
-          cognitiveLoad: cognitiveLoad,
-          reply: reply,
-          targetProducedSpontaneously: spontaneous,
-          detectedTarget: detectedTarget,
-        );
-      } catch (e) {
-        print('[DualPedagogicalAgentService] Nebius error: $e');
-      }
-    }
-
-    if (groqApiKey.isNotEmpty) {
-      try {
-        print('[DualPedagogicalAgentService] Trying Groq provider...');
-        final reply = await _generateGroqReply(
-          targetLanguage: targetLanguage,
-          role: role,
-          situation: situation,
-          hiddenTargets: hiddenTargets,
-          previousTurns: previousTurns,
-          learnerUtterance: learnerUtterance,
-          tactic: tactic,
-          cognitiveLoad: cognitiveLoad,
-          culturalFacts: culturalFacts,
-        );
-        return PedagogicalAgentTelemetry(
-          activeMission: 'Elicit target expressions: ${hiddenTargets.join(", ")}',
-          activeTactic: tactic,
-          hiddenTargets: hiddenTargets,
-          elicitedTargets: detectedTarget != null ? [detectedTarget] : [],
-          estimatedLatencySec: responseLatencySec,
-          cognitiveLoad: cognitiveLoad,
-          reply: reply,
-          targetProducedSpontaneously: spontaneous,
-          detectedTarget: detectedTarget,
-        );
-      } catch (e) {
-        print('[DualPedagogicalAgentService] Groq error: $e');
+      } catch (error) {
+        print('[DualPedagogicalAgentService] ${candidate.name} error: $error');
       }
     }
 
     // 3. Fallback
-    print('[DualPedagogicalAgentService] Falling back to contextual template reply.');
+    print(
+      '[DualPedagogicalAgentService] Falling back to contextual template reply.',
+    );
     return _generateFallbackReply(
-      role: role,
       targetLanguage: targetLanguage,
-      learnerUtterance: learnerUtterance,
       hiddenTargets: hiddenTargets,
-      detectedTarget: detectedTarget,
-      spontaneous: spontaneous,
       tactic: tactic,
       latency: responseLatencySec,
       cognitiveLoad: cognitiveLoad,
+      recognizedTargets: recognizedTargets,
+      assistedTargets: assistedTargets,
     );
   }
+
+  List<AiProvider> _availableProviders() {
+    final configured = <AiProvider, bool>{
+      AiProvider.gemini: geminiApiKey.isNotEmpty,
+      AiProvider.nebius: nebiusApiKey.isNotEmpty,
+      AiProvider.nvidia: nvidiaApiKey.isNotEmpty,
+      AiProvider.groq: groqApiKey.isNotEmpty,
+    };
+    final order = <AiProvider>[
+      provider,
+      AiProvider.nvidia,
+      AiProvider.gemini,
+      AiProvider.nebius,
+      AiProvider.groq,
+    ];
+    return order
+        .toSet()
+        .where((candidate) => configured[candidate]!)
+        .take(2)
+        .toList();
+  }
+
+  Future<String> _generateReplyFor(
+    AiProvider candidate, {
+    required String targetLanguage,
+    required String role,
+    required String situation,
+    required List<String> hiddenTargets,
+    required List<ConversationHistoryEntry> previousTurns,
+    required String learnerUtterance,
+    required String tactic,
+    required String cognitiveLoad,
+    List<String>? culturalFacts,
+  }) => switch (candidate) {
+    AiProvider.gemini => _generateGeminiReply(
+      targetLanguage: targetLanguage,
+      role: role,
+      situation: situation,
+      hiddenTargets: hiddenTargets,
+      previousTurns: previousTurns,
+      learnerUtterance: learnerUtterance,
+      tactic: tactic,
+      cognitiveLoad: cognitiveLoad,
+      culturalFacts: culturalFacts,
+    ),
+    AiProvider.nebius => _generateNebiusReply(
+      targetLanguage: targetLanguage,
+      role: role,
+      situation: situation,
+      hiddenTargets: hiddenTargets,
+      previousTurns: previousTurns,
+      learnerUtterance: learnerUtterance,
+      tactic: tactic,
+      cognitiveLoad: cognitiveLoad,
+      culturalFacts: culturalFacts,
+    ),
+    AiProvider.nvidia => _generateNvidiaReply(
+      targetLanguage: targetLanguage,
+      role: role,
+      situation: situation,
+      hiddenTargets: hiddenTargets,
+      previousTurns: previousTurns,
+      learnerUtterance: learnerUtterance,
+      tactic: tactic,
+      cognitiveLoad: cognitiveLoad,
+      culturalFacts: culturalFacts,
+    ),
+    AiProvider.groq => _generateGroqReply(
+      targetLanguage: targetLanguage,
+      role: role,
+      situation: situation,
+      hiddenTargets: hiddenTargets,
+      previousTurns: previousTurns,
+      learnerUtterance: learnerUtterance,
+      tactic: tactic,
+      cognitiveLoad: cognitiveLoad,
+      culturalFacts: culturalFacts,
+    ),
+  };
+
+  List<Map<String, String>> _openAiHistory(
+    List<ConversationHistoryEntry> history,
+  ) => [
+    for (final turn in history)
+      {
+        'role': turn.role == ConversationTurnRole.tutor ? 'assistant' : 'user',
+        'content': turn.content,
+      },
+  ];
+
+  bool _containsWholeTarget(String utterance, String target) {
+    final cleanTarget = target.trim().toLowerCase();
+    if (cleanTarget.isEmpty) return false;
+    const delimiter = r'[^\p{L}\p{N}]';
+    return RegExp(
+      '(^|$delimiter)${RegExp.escape(cleanTarget)}(\$|$delimiter)',
+      unicode: true,
+    ).hasMatch(utterance.toLowerCase());
+  }
+
+  bool _wasAssisted(List<ConversationHistoryEntry> history, String target) =>
+      history.any((turn) {
+        if (turn.role != ConversationTurnRole.tutor) return false;
+        if (turn.assistance != ConversationAssistance.none) return true;
+        return _containsWholeTarget(turn.content, target);
+      });
 
   Future<String> _generateGeminiReply({
     required String targetLanguage,
     required String role,
     required String situation,
     required List<String> hiddenTargets,
-    required List<String> previousTurns,
+    required List<ConversationHistoryEntry> previousTurns,
     required String learnerUtterance,
     required String tactic,
     required String cognitiveLoad,
     List<String>? culturalFacts,
   }) async {
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are the Talkloom Pedagogical Conversation Tutor.
 Role: $role
 Situation: $situation
@@ -267,11 +265,12 @@ CRITICAL PEDAGOGICAL VOCABULARY CONSTRAINTS:
 5. Gently prompt or encourage the learner to speak without explicitly saying the secret target phrases.
 ''';
 
-    final prompt = '''
+    final prompt =
+        '''
 $systemPrompt
 
 Previous conversation turns:
-${previousTurns.join("\n")}
+${previousTurns.map((turn) => "${turn.role.name}: ${turn.content}").join("\n")}
 
 Learner just said: "$learnerUtterance"
 
@@ -289,14 +288,14 @@ Your spoken reply as $role (in $targetLanguage):
         'contents': [
           {
             'parts': [
-              {'text': prompt}
-            ]
-          }
+              {'text': prompt},
+            ],
+          },
         ],
         'generationConfig': {
           'temperature': 0.6,
           'maxOutputTokens': 150,
-        }
+        },
       }),
     );
 
@@ -314,13 +313,14 @@ Your spoken reply as $role (in $targetLanguage):
     required String role,
     required String situation,
     required List<String> hiddenTargets,
-    required List<String> previousTurns,
+    required List<ConversationHistoryEntry> previousTurns,
     required String learnerUtterance,
     required String tactic,
     required String cognitiveLoad,
     List<String>? culturalFacts,
   }) async {
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are the Talkloom Pedagogical Conversation Tutor.
 Role: $role
 Situation: $situation
@@ -340,12 +340,9 @@ Rules:
 
     final messages = <Map<String, String>>[
       {'role': 'system', 'content': systemPrompt},
+      ..._openAiHistory(previousTurns),
+      {'role': 'user', 'content': learnerUtterance},
     ];
-
-    for (var turn in previousTurns) {
-      messages.add({'role': 'assistant', 'content': turn});
-    }
-    messages.add({'role': 'user', 'content': learnerUtterance});
 
     final response = await _client.post(
       Uri.parse('$nebiusBaseUrl/chat/completions'),
@@ -374,13 +371,14 @@ Rules:
     required String role,
     required String situation,
     required List<String> hiddenTargets,
-    required List<String> previousTurns,
+    required List<ConversationHistoryEntry> previousTurns,
     required String learnerUtterance,
     required String tactic,
     required String cognitiveLoad,
     List<String>? culturalFacts,
   }) async {
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are the Talkloom Pedagogical Conversation Tutor powered directly by NVIDIA NIM (Nemotron).
 Role: $role
 Situation: $situation
@@ -400,12 +398,9 @@ Rules:
 
     final messages = <Map<String, String>>[
       {'role': 'system', 'content': systemPrompt},
+      ..._openAiHistory(previousTurns),
+      {'role': 'user', 'content': learnerUtterance},
     ];
-
-    for (var turn in previousTurns) {
-      messages.add({'role': 'assistant', 'content': turn});
-    }
-    messages.add({'role': 'user', 'content': learnerUtterance});
 
     final response = await _client.post(
       Uri.parse('$nvidiaBaseUrl/chat/completions'),
@@ -435,13 +430,14 @@ Rules:
     required String role,
     required String situation,
     required List<String> hiddenTargets,
-    required List<String> previousTurns,
+    required List<ConversationHistoryEntry> previousTurns,
     required String learnerUtterance,
     required String tactic,
     required String cognitiveLoad,
     List<String>? culturalFacts,
   }) async {
-    final systemPrompt = '''
+    final systemPrompt =
+        '''
 You are the Talkloom Pedagogical Conversation Tutor powered by Groq LPU (Llama 3.3).
 Role: $role
 Situation: $situation
@@ -461,12 +457,9 @@ Rules:
 
     final messages = <Map<String, String>>[
       {'role': 'system', 'content': systemPrompt},
+      ..._openAiHistory(previousTurns),
+      {'role': 'user', 'content': learnerUtterance},
     ];
-
-    for (var turn in previousTurns) {
-      messages.add({'role': 'assistant', 'content': turn});
-    }
-    messages.add({'role': 'user', 'content': learnerUtterance});
 
     final response = await _client.post(
       Uri.parse('$groqBaseUrl/chat/completions'),
@@ -491,54 +484,32 @@ Rules:
   }
 
   PedagogicalAgentTelemetry _generateFallbackReply({
-    required String role,
     required String targetLanguage,
-    required String learnerUtterance,
     required List<String> hiddenTargets,
-    required String? detectedTarget,
-    required bool spontaneous,
     required String tactic,
     required double latency,
     required String cognitiveLoad,
+    required List<String> recognizedTargets,
+    required List<String> assistedTargets,
   }) {
     final isGerman = targetLanguage.toLowerCase().startsWith('de');
 
-    String reply;
-    final targetSample = hiddenTargets.isNotEmpty ? hiddenTargets.first.split(':').last.trim() : '';
-    if (isGerman) {
-      if (spontaneous && detectedTarget != null) {
-        reply =
-            'Sehr gut! Das Wort "$detectedTarget" passt genau. Wie möchten Sie weiter vorgehen?';
-      } else if (targetSample.isNotEmpty) {
-        reply =
-            'Ich verstehe. Können Sie mir mehr darüber erzählen, zum Beispiel mit "$targetSample"?';
-      } else {
-        reply =
-            'Ich verstehe Sie gut. Was möchten Sie als Nächstes tun?';
-      }
-    } else {
-      if (spontaneous && detectedTarget != null) {
-        reply =
-            'Excellent! "$detectedTarget" fits perfectly here. How would you like to proceed?';
-      } else if (targetSample.isNotEmpty) {
-        reply =
-            'I understand. Could you tell me more about that, perhaps using "$targetSample"?';
-      } else {
-        reply =
-            'I understand you clearly. What would you like to do next?';
-      }
-    }
+    final reply = isGerman
+        ? 'Ich verstehe. Was möchtest du dazu noch wissen?'
+        : 'I understand. What would you like to know next?';
 
     return PedagogicalAgentTelemetry(
       activeMission: 'Elicit target expressions: ${hiddenTargets.join(", ")}',
       activeTactic: tactic,
       hiddenTargets: hiddenTargets,
-      elicitedTargets: detectedTarget != null ? [detectedTarget] : [],
+      elicitedTargets: const [],
       estimatedLatencySec: latency,
       cognitiveLoad: cognitiveLoad,
       reply: reply,
-      targetProducedSpontaneously: spontaneous,
-      detectedTarget: detectedTarget,
+      targetProducedSpontaneously: false,
+      recognizedTargets: recognizedTargets,
+      assistedTargets: assistedTargets,
+      responseMode: 'template_fallback',
     );
   }
 }
@@ -553,6 +524,10 @@ class PedagogicalAgentTelemetry {
   final String reply;
   final bool targetProducedSpontaneously;
   final String? detectedTarget;
+  final List<String> recognizedTargets;
+  final List<String> assistedTargets;
+  final String responseMode;
+  final bool evidenceEligible;
 
   PedagogicalAgentTelemetry({
     required this.activeMission,
@@ -564,17 +539,101 @@ class PedagogicalAgentTelemetry {
     required this.reply,
     required this.targetProducedSpontaneously,
     this.detectedTarget,
+    this.recognizedTargets = const [],
+    this.assistedTargets = const [],
+    this.responseMode = 'provider',
+    this.evidenceEligible = false,
   });
 
   Map<String, dynamic> toJson() => {
-        'activeMission': activeMission,
-        'activeTactic': activeTactic,
-        'hiddenTargets': hiddenTargets,
-        'elicitedTargets': elicitedTargets,
-        'estimatedLatencySec': estimatedLatencySec,
-        'cognitiveLoad': cognitiveLoad,
-        'reply': reply,
-        'targetProducedSpontaneously': targetProducedSpontaneously,
-        'detectedTarget': detectedTarget,
-      };
+    'activeMission': activeMission,
+    'activeTactic': activeTactic,
+    'hiddenTargets': hiddenTargets,
+    'elicitedTargets': elicitedTargets,
+    'estimatedLatencySec': estimatedLatencySec,
+    'cognitiveLoad': cognitiveLoad,
+    'reply': reply,
+    'targetProducedSpontaneously': targetProducedSpontaneously,
+    'detectedTarget': detectedTarget,
+    'recognizedTargets': recognizedTargets,
+    'assistedTargets': assistedTargets,
+    'responseMode': responseMode,
+    'evidenceEligible': evidenceEligible,
+  };
+}
+
+enum ConversationTurnRole { learner, tutor }
+
+enum ConversationAssistance { none, prompted, modelled }
+
+class ConversationHistoryEntry {
+  final ConversationTurnRole role;
+  final String content;
+  final ConversationAssistance assistance;
+
+  const ConversationHistoryEntry({
+    required this.role,
+    required this.content,
+    required this.assistance,
+  });
+
+  static List<ConversationHistoryEntry> parseAll(List<String> values) {
+    final result = <ConversationHistoryEntry>[];
+    var totalCharacters = 0;
+    for (final value in values.reversed) {
+      if (result.length >= 30 || totalCharacters >= 12000) break;
+      if (value.trim().isEmpty) continue;
+      final parsed = _parseOne(value);
+      final content = parsed.content.length > 3000
+          ? parsed.content.substring(0, 3000)
+          : parsed.content;
+      if (totalCharacters + content.length > 12000) continue;
+      totalCharacters += content.length;
+      result.add(
+        ConversationHistoryEntry(
+          role: parsed.role,
+          content: content,
+          assistance: parsed.assistance,
+        ),
+      );
+    }
+    return result.reversed.toList();
+  }
+
+  static ConversationHistoryEntry _parseOne(String value) {
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is Map<String, dynamic>) {
+        final role = switch (decoded['role']) {
+          'learner' => ConversationTurnRole.learner,
+          'tutor' => ConversationTurnRole.tutor,
+          _ => null,
+        };
+        final content = decoded['content'];
+        final assistance = switch (decoded['assistance']) {
+          'none' => ConversationAssistance.none,
+          'prompted' => ConversationAssistance.prompted,
+          'modelled' => ConversationAssistance.modelled,
+          _ => null,
+        };
+        if (role != null &&
+            content is String &&
+            content.trim().isNotEmpty &&
+            assistance != null) {
+          return ConversationHistoryEntry(
+            role: role,
+            content: content,
+            assistance: assistance,
+          );
+        }
+      }
+    } on FormatException {
+      // Legacy plain strings are treated as tutor help for safe evidence.
+    }
+    return ConversationHistoryEntry(
+      role: ConversationTurnRole.tutor,
+      content: value,
+      assistance: ConversationAssistance.modelled,
+    );
+  }
 }

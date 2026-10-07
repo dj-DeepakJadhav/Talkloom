@@ -27,6 +27,42 @@ import 'package:talkloom_client/src/protocol/lessons/lesson.dart' as _irv3hfbd;
 import 'package:talkloom_client/src/protocol/sources/source.dart' as _ikpsvynv;
 import 'protocol.dart' as _il2as5qe;
 
+/// Each guest receives a distinct, persisted Serverpod identity.
+/// {@category Endpoint}
+class EndpointAnonymousIdp extends _iaic.EndpointAnonymousIdpBase {
+  EndpointAnonymousIdp(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'anonymousIdp';
+
+  _ida.Future<bool> isGuest() => caller.callServerEndpoint<bool>(
+    'anonymousIdp',
+    'isGuest',
+    {},
+  );
+
+  /// Both identities must be proved: the request authenticates the guest and
+  /// the fresh email access token proves ownership of the destination account.
+  _ida.Future<void> upgrade(String accountToken) =>
+      caller.callServerEndpoint<void>(
+        'anonymousIdp',
+        'upgrade',
+        {'accountToken': accountToken},
+      );
+
+  /// Creates a new anonymous account and returns its session.
+  ///
+  /// Invokes the [AnonymousIdp.beforeAnonymousAccount] callback if configured,
+  /// which may prevent account creation if the endpoint is protected.
+  @override
+  _ida.Future<_iacc.AuthSuccess> login({String? token}) =>
+      caller.callServerEndpoint<_iacc.AuthSuccess>(
+        'anonymousIdp',
+        'login',
+        {'token': token},
+      );
+}
+
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
 /// on the client.
@@ -408,6 +444,21 @@ class EndpointIngestion extends _isc.EndpointRef {
   @override
   String get name => 'ingestion';
 
+  /// Only reports this learner's import, never another owner's cache rows.
+  _ida.Future<String> getImportStatus(
+    String url,
+    String targetLanguage,
+    DateTime startedAt,
+  ) => caller.callServerEndpoint<String>(
+    'ingestion',
+    'getImportStatus',
+    {
+      'url': url,
+      'targetLanguage': targetLanguage,
+      'startedAt': startedAt,
+    },
+  );
+
   _ida.Future<_irv3hfbd.Lesson> processSourceAndCompile(
     String type,
     String title,
@@ -464,6 +515,41 @@ class EndpointIngestion extends _isc.EndpointRef {
       'offset': offset,
     },
   );
+
+  _ida.Future<bool> removeSource(int sourceId) =>
+      caller.callServerEndpoint<bool>(
+        'ingestion',
+        'removeSource',
+        {'sourceId': sourceId},
+      );
+
+  _ida.Future<bool> restoreSource(int sourceId) =>
+      caller.callServerEndpoint<bool>(
+        'ingestion',
+        'restoreSource',
+        {'sourceId': sourceId},
+      );
+}
+
+/// {@category Endpoint}
+class EndpointSpeech extends _isc.EndpointRef {
+  EndpointSpeech(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'speech';
+
+  /// Private guest sessions and registered users use the same speech path.
+  _ida.Future<String> synthesize(
+    String text,
+    String language,
+  ) => caller.callServerEndpoint<String>(
+    'speech',
+    'synthesize',
+    {
+      'text': text,
+      'language': language,
+    },
+  );
 }
 
 class Modules {
@@ -504,6 +590,7 @@ class Client extends _isc.ServerpodClientShared {
              disconnectStreamsOnLostInternetConnection,
          httpClientOverride: httpClientOverride,
        ) {
+    anonymousIdp = EndpointAnonymousIdp(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     greeting = EndpointGreeting(this);
@@ -511,8 +598,11 @@ class Client extends _isc.ServerpodClientShared {
     lessonCompiler = EndpointLessonCompiler(this);
     pedagogical = EndpointPedagogical(this);
     ingestion = EndpointIngestion(this);
+    speech = EndpointSpeech(this);
     modules = Modules(this);
   }
+
+  late final EndpointAnonymousIdp anonymousIdp;
 
   late final EndpointEmailIdp emailIdp;
 
@@ -528,10 +618,13 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointIngestion ingestion;
 
+  late final EndpointSpeech speech;
+
   late final Modules modules;
 
   @override
   Map<String, _isc.EndpointRef> get endpointRefLookup => {
+    'anonymousIdp': anonymousIdp,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'greeting': greeting,
@@ -539,6 +632,7 @@ class Client extends _isc.ServerpodClientShared {
     'lessonCompiler': lessonCompiler,
     'pedagogical': pedagogical,
     'ingestion': ingestion,
+    'speech': speech,
   };
 
   @override

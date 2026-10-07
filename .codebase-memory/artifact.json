@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "d40470d88ceca2d243104013f9e4fa096291d35a",
+    "indexed_at": "2026-10-07T14:55:41Z",
+    "project": "C-DJ-Hackathon-Talkloom-Talkloom",
+    "nodes": 2174,
+    "edges": 5951,
+    "original_size": 7274496,
+    "compressed_size": 1037034,
+    "compression_level": 3
+}

@@ -317,6 +317,13 @@ class Protocol extends _is.DatabaseSerializationManager {
           isNullable: false,
           dartType: 'DateTime',
         ),
+        _isp.ColumnDefinition(
+          name: 'isArchived',
+          columnType: _isp.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
       ],
       foreignKeys: [],
       indexes: [
@@ -327,6 +334,27 @@ class Protocol extends _is.DatabaseSerializationManager {
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,
               definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'targetLanguage',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'isArchived',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'source_url_lang_idx',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'url',
             ),
             _isp.IndexElementDefinition(
               type: _isp.IndexElementDefinitionType.column,

@@ -15,6 +15,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _iacs;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _iais;
+import '../auth/anonymous_idp_endpoint.dart' as _in0zita6;
 import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
 import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
 import '../greetings/greeting_endpoint.dart' as _il624ik7;
@@ -22,11 +23,18 @@ import '../learner/learner_state_endpoint.dart' as _i9uu499j;
 import '../lessons/lesson_compiler_endpoint.dart' as _iszs4rjo;
 import '../lessons/pedagogical_endpoint.dart' as _ikctb4li;
 import '../sources/ingestion_endpoint.dart' as _i18xt97h;
+import '../speech/speech_endpoint.dart' as _inogyoe8;
 
 class Endpoints extends _is.EndpointDispatch {
   @override
   void initializeEndpoints(_is.Server server) {
     var endpoints = <String, _is.Endpoint>{
+      'anonymousIdp': _in0zita6.AnonymousIdpEndpoint()
+        ..initialize(
+          server,
+          'anonymousIdp',
+          null,
+        ),
       'emailIdp': _iuc1hd5t.EmailIdpEndpoint()
         ..initialize(
           server,
@@ -69,7 +77,70 @@ class Endpoints extends _is.EndpointDispatch {
           'ingestion',
           null,
         ),
+      'speech': _inogyoe8.SpeechEndpoint()
+        ..initialize(
+          server,
+          'speech',
+          null,
+        ),
     };
+    connectors['anonymousIdp'] = _is.EndpointConnector(
+      name: 'anonymousIdp',
+      endpoint: endpoints['anonymousIdp']!,
+      methodConnectors: {
+        'isGuest': _is.MethodConnector(
+          name: 'isGuest',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .isGuest(session),
+        ),
+        'upgrade': _is.MethodConnector(
+          name: 'upgrade',
+          params: {
+            'accountToken': _is.ParameterDescription(
+              name: 'accountToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .upgrade(
+                        session,
+                        params['accountToken'],
+                      ),
+        ),
+        'login': _is.MethodConnector(
+          name: 'login',
+          params: {
+            'token': _is.ParameterDescription(
+              name: 'token',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .login(
+                        session,
+                        token: params['token'],
+                      ),
+        ),
+      },
+    );
     connectors['emailIdp'] = _is.EndpointConnector(
       name: 'emailIdp',
       endpoint: endpoints['emailIdp']!,
@@ -572,6 +643,37 @@ class Endpoints extends _is.EndpointDispatch {
       name: 'ingestion',
       endpoint: endpoints['ingestion']!,
       methodConnectors: {
+        'getImportStatus': _is.MethodConnector(
+          name: 'getImportStatus',
+          params: {
+            'url': _is.ParameterDescription(
+              name: 'url',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'startedAt': _is.ParameterDescription(
+              name: 'startedAt',
+              type: _is.getType<DateTime>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .getImportStatus(
+                    session,
+                    params['url'],
+                    params['targetLanguage'],
+                    params['startedAt'],
+                  ),
+        ),
         'processSourceAndCompile': _is.MethodConnector(
           name: 'processSourceAndCompile',
           params: {
@@ -706,6 +808,75 @@ class Endpoints extends _is.EndpointDispatch {
                     params['targetLanguage'],
                     limit: params['limit'],
                     offset: params['offset'],
+                  ),
+        ),
+        'removeSource': _is.MethodConnector(
+          name: 'removeSource',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .removeSource(
+                    session,
+                    params['sourceId'],
+                  ),
+        ),
+        'restoreSource': _is.MethodConnector(
+          name: 'restoreSource',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .restoreSource(
+                    session,
+                    params['sourceId'],
+                  ),
+        ),
+      },
+    );
+    connectors['speech'] = _is.EndpointConnector(
+      name: 'speech',
+      endpoint: endpoints['speech']!,
+      methodConnectors: {
+        'synthesize': _is.MethodConnector(
+          name: 'synthesize',
+          params: {
+            'text': _is.ParameterDescription(
+              name: 'text',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['speech'] as _inogyoe8.SpeechEndpoint).synthesize(
+                    session,
+                    params['text'],
+                    params['language'],
                   ),
         ),
       },

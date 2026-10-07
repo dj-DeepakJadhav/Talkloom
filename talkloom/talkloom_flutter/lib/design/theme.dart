@@ -25,6 +25,7 @@ ThemeData buildTalkloomTheme(Brightness brightness) {
 
   return ThemeData(
     useMaterial3: true,
+    fontFamily: 'Inter',
     brightness: brightness,
     scaffoldBackgroundColor: colors.canvas,
     splashFactory: NoSplash.splashFactory,

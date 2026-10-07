@@ -87,259 +87,281 @@ class _ApiKeysSheetState extends ConsumerState<ApiKeysSheet> {
               top: Radius.circular(TlRadius.xl),
             ),
             border: Border(
-              top: BorderSide(color: colors.borderStrong.withValues(alpha: 0.5)),
+              top: BorderSide(
+                color: colors.borderStrong.withValues(alpha: 0.5),
+              ),
             ),
           ),
           child: SafeArea(
             top: false,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + TlSpace.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Top drag pill
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: TlSpace.sm,
-                    bottom: TlSpace.md,
-                  ),
-                  child: Container(
-                    height: 4,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: colors.borderStrong,
-                      borderRadius: TlRadius.pillRadius,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + TlSpace.lg,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top drag pill
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: TlSpace.sm,
+                        bottom: TlSpace.md,
+                      ),
+                      child: Container(
+                        height: 4,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: colors.borderStrong,
+                          borderRadius: TlRadius.pillRadius,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              // Sheet Heading (Mural style)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
-                child: Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // Sheet Heading (Mural style)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TlSpace.gutter,
+                    ),
+                    child: Row(
                       children: [
-                        Text(
-                          'Advanced · AI Providers',
-                          style: context.type.caption.copyWith(
-                            color: colors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Advanced · AI Providers',
+                              style: context.type.caption.copyWith(
+                                color: colors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Bring Your Own Key',
+                              style: context.type.titleLarge.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Bring Your Own Key',
-                          style: context.type.titleLarge.copyWith(
-                            fontWeight: FontWeight.w800,
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.primarySoft,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'BYOK Mode',
+                            style: context.type.caption.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  ),
+
+                  const SizedBox(height: TlSpace.sm),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TlSpace.gutter,
+                    ),
+                    child: Text(
+                      'Choose your preferred inference backend or supply your personal keys. Keys remain on this device and are never shared.',
+                      style: context.type.caption.copyWith(
+                        color: colors.textMuted,
+                        fontSize: 13,
+                        height: 1.3,
                       ),
-                      decoration: BoxDecoration(
-                        color: colors.primarySoft,
-                        borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+
+                  const SizedBox(height: TlSpace.md),
+
+                  // Active Provider Selector (Gemini / NVIDIA NIM / Groq)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TlSpace.gutter,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ACTIVE PROVIDER',
+                          style: context.type.caption.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                            color: colors.textMuted,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _buildProviderOption(
+                              provider: ByokProvider.gemini,
+                              title: 'Gemini',
+                              subtitle: 'Google 3.1 Flash',
+                              isSelected:
+                                  byok.activeProvider == ByokProvider.gemini,
+                              colors: colors,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildProviderOption(
+                              provider: ByokProvider.nvidia,
+                              title: 'NVIDIA',
+                              subtitle: 'Nemotron NIM',
+                              isSelected:
+                                  byok.activeProvider == ByokProvider.nvidia,
+                              colors: colors,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildProviderOption(
+                              provider: ByokProvider.groq,
+                              title: 'Groq',
+                              subtitle: 'Llama 3.3 70B',
+                              isSelected:
+                                  byok.activeProvider == ByokProvider.groq,
+                              colors: colors,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: TlSpace.lg),
+
+                  // Provider Input Fields
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TlSpace.gutter,
+                    ),
+                    child: Column(
+                      children: [
+                        // Gemini Field
+                        _buildKeyField(
+                          label: 'Google Gemini API Key',
+                          placeholder: 'AIzaSy...',
+                          controller: _geminiCtrl,
+                          obscure: _obscureGemini,
+                          onToggleObscure: () =>
+                              setState(() => _obscureGemini = !_obscureGemini),
+                          isActive: byok.activeProvider == ByokProvider.gemini,
+                          hintUrl: 'aistudio.google.com',
+                          colors: colors,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // NVIDIA NIM Field
+                        _buildKeyField(
+                          label: 'NVIDIA NIM API Key',
+                          placeholder: 'nvapi-...',
+                          controller: _nvidiaCtrl,
+                          obscure: _obscureNvidia,
+                          onToggleObscure: () =>
+                              setState(() => _obscureNvidia = !_obscureNvidia),
+                          isActive: byok.activeProvider == ByokProvider.nvidia,
+                          hintUrl: 'build.nvidia.com',
+                          colors: colors,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Groq Field
+                        _buildKeyField(
+                          label: 'Groq Cloud API Key',
+                          placeholder: 'gsk_...',
+                          controller: _groqCtrl,
+                          obscure: _obscureGroq,
+                          onToggleObscure: () =>
+                              setState(() => _obscureGroq = !_obscureGroq),
+                          isActive: byok.activeProvider == ByokProvider.groq,
+                          hintUrl: 'console.groq.com',
+                          colors: colors,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: TlSpace.lg),
+
+                  // Save Action Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TlSpace.gutter,
+                    ),
+                    child: TlPressable(
+                      onTap: _saveKeys,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              TlPalette.brassGoldLight,
+                              TlPalette.brassGold,
+                              TlPalette.brassGoldDeep,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: TlPalette.brassGold.withValues(
+                                alpha: 0.35,
+                              ),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Save & Activate Settings',
+                            style: context.type.bodyStrong.copyWith(
+                              color: TlPalette.obsidian,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: TlSpace.sm),
+
+                  // Architectural reference notice
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: TlSpace.gutter,
                       ),
                       child: Text(
-                        'BYOK Mode',
+                        'Reference Architecture: github.com/Chuloo/mural',
                         style: context.type.caption.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w700,
+                          color: colors.textMuted,
                           fontSize: 11,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: TlSpace.sm),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
-                child: Text(
-                  'Choose your preferred inference backend or supply your personal keys. Keys remain on this device and are never shared.',
-                  style: context.type.caption.copyWith(
-                    color: colors.textMuted,
-                    fontSize: 13,
-                    height: 1.3,
                   ),
-                ),
+                ],
               ),
-
-              const SizedBox(height: TlSpace.md),
-
-              // Active Provider Selector (Gemini / NVIDIA NIM / Groq)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ACTIVE PROVIDER',
-                      style: context.type.caption.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                        color: colors.textMuted,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildProviderOption(
-                          provider: ByokProvider.gemini,
-                          title: 'Gemini',
-                          subtitle: 'Google 3.1 Flash',
-                          isSelected: byok.activeProvider == ByokProvider.gemini,
-                          colors: colors,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildProviderOption(
-                          provider: ByokProvider.nvidia,
-                          title: 'NVIDIA',
-                          subtitle: 'Nemotron NIM',
-                          isSelected: byok.activeProvider == ByokProvider.nvidia,
-                          colors: colors,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildProviderOption(
-                          provider: ByokProvider.groq,
-                          title: 'Groq',
-                          subtitle: 'Llama 3.3 70B',
-                          isSelected: byok.activeProvider == ByokProvider.groq,
-                          colors: colors,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: TlSpace.lg),
-
-              // Provider Input Fields
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
-                child: Column(
-                  children: [
-                    // Gemini Field
-                    _buildKeyField(
-                      label: 'Google Gemini API Key',
-                      placeholder: 'AIzaSy...',
-                      controller: _geminiCtrl,
-                      obscure: _obscureGemini,
-                      onToggleObscure: () => setState(() => _obscureGemini = !_obscureGemini),
-                      isActive: byok.activeProvider == ByokProvider.gemini,
-                      hintUrl: 'aistudio.google.com',
-                      colors: colors,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // NVIDIA NIM Field
-                    _buildKeyField(
-                      label: 'NVIDIA NIM API Key',
-                      placeholder: 'nvapi-...',
-                      controller: _nvidiaCtrl,
-                      obscure: _obscureNvidia,
-                      onToggleObscure: () => setState(() => _obscureNvidia = !_obscureNvidia),
-                      isActive: byok.activeProvider == ByokProvider.nvidia,
-                      hintUrl: 'build.nvidia.com',
-                      colors: colors,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Groq Field
-                    _buildKeyField(
-                      label: 'Groq Cloud API Key',
-                      placeholder: 'gsk_...',
-                      controller: _groqCtrl,
-                      obscure: _obscureGroq,
-                      onToggleObscure: () => setState(() => _obscureGroq = !_obscureGroq),
-                      isActive: byok.activeProvider == ByokProvider.groq,
-                      hintUrl: 'console.groq.com',
-                      colors: colors,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: TlSpace.lg),
-
-              // Save Action Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
-                child: TlPressable(
-                  onTap: _saveKeys,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          TlPalette.brassGoldLight,
-                          TlPalette.brassGold,
-                          TlPalette.brassGoldDeep,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: TlPalette.brassGold.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Save & Activate Settings',
-                        style: context.type.bodyStrong.copyWith(
-                          color: TlPalette.obsidian,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: TlSpace.sm),
-
-              // Architectural reference notice
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
-                  child: Text(
-                    'Reference Architecture: github.com/Chuloo/mural',
-                    style: context.type.caption.copyWith(
-                      color: colors.textMuted,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-    ),
     );
   }
 
@@ -420,7 +442,9 @@ class _ApiKeysSheetState extends ConsumerState<ApiKeysSheet> {
         color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isActive ? colors.primary.withValues(alpha: 0.6) : colors.border,
+          color: isActive
+              ? colors.primary.withValues(alpha: 0.6)
+              : colors.border,
         ),
       ),
       child: Column(

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,22 +9,22 @@ import '../../app/router.dart';
 import '../../core/failure.dart';
 import '../../core/platform/web_voice_service.dart';
 import '../../design/components/tl_states.dart';
-import '../../design/components/tl_surface.dart';
 import '../../design/theme.dart';
 import '../../domain/lesson_content.dart';
-import 'fluid_voice_orb.dart';
-import 'mission_tracker.dart';
+import '../content/content_widgets.dart';
+import '../shell/talkloom_navigation_bar.dart';
 
 enum _Speaker { learner, tutor }
 
 class _Message {
-  const _Message(this.speaker, this.text);
+  const _Message(this.speaker, this.text, {this.responseMode});
 
   final _Speaker speaker;
   final String text;
+  final String? responseMode;
 }
 
-/// The speaking mission that closes every lesson.
+/// Speaking from the learner’s own content, with optional practice alongside it.
 ///
 /// Features real Web Speech recognition (STT) for hands-free or push-to-talk
 /// conversation practice, Web SpeechSynthesis (TTS) so the learner hears
@@ -41,11 +42,9 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
   final ScrollController _scroll = ScrollController();
 
   final List<_Message> _messages = [];
-  final List<String> _tutorTurns = [];
   final List<String> _captured = [];
 
   bool _isSending = false;
-  bool _isSpeaking = false;
   bool _isRecording = false;
   String? _error;
   DateTime _turnStart = DateTime.now();
@@ -73,10 +72,21 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
         });
       }
     };
+    WebVoiceService.instance.onListeningChanged = (listening) {
+      if (!mounted || listening || !_isRecording) return;
+      _micPulseController.stop();
+      setState(() {
+        _isRecording = false;
+        _error =
+            'Microphone stopped. Check browser permissions, or type your reply below.';
+      });
+    };
   }
 
   @override
   void dispose() {
+    WebVoiceService.instance.onTranscriptReceived = null;
+    WebVoiceService.instance.onListeningChanged = null;
     WebVoiceService.instance.stopListening();
     _micPulseController.dispose();
     _input.dispose();
@@ -131,7 +141,20 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
             role: plan.role,
             situation: plan.situation,
             hiddenTargets: plan.hiddenTargets,
-            previousTurns: _tutorTurns,
+            previousTurns: _messages
+                .take(_messages.length - 1)
+                .map(
+                  (message) => jsonEncode({
+                    'role': message.speaker == _Speaker.learner
+                        ? 'learner'
+                        : 'tutor',
+                    'content': message.text,
+                    'assistance': message.speaker == _Speaker.learner
+                        ? 'none'
+                        : 'modelled',
+                  }),
+                )
+                .toList(),
             utterance: text,
             latencySec: latency,
           );
@@ -139,13 +162,18 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
       if (!mounted) return;
 
       setState(() {
-        _messages.add(_Message(_Speaker.tutor, turn.reply));
-        _tutorTurns.add(turn.reply);
+        _messages.add(
+          _Message(
+            _Speaker.tutor,
+            turn.reply,
+            responseMode: turn.responseMode,
+          ),
+        );
         _turnStart = DateTime.now();
-        _isSpeaking = true;
 
         final target = turn.detectedTarget;
-        if (turn.producedSpontaneously &&
+        if (turn.evidenceEligible &&
+            turn.producedSpontaneously &&
             target != null &&
             !_captured.contains(target)) {
           _captured.add(target);
@@ -157,13 +185,15 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
       final langTag = session.target.code.toLowerCase().startsWith('de')
           ? 'de-DE'
           : session.target.code;
-      WebVoiceService.instance.speak(turn.reply, langCode: langTag);
-
-      // Viseme speaking duration proportional to utterance length (capped 1.5 - 4.5s)
-      final speechMs = (turn.reply.length * 55).clamp(1800, 4500);
-      Future.delayed(Duration(milliseconds: speechMs), () {
-        if (mounted) setState(() => _isSpeaking = false);
-      });
+      final speechStarted = await WebVoiceService.instance.speak(
+        turn.reply,
+        langCode: langTag,
+      );
+      if (!speechStarted && mounted) {
+        setState(() {
+          _error = WebVoiceService.instance.speechUnavailableReason;
+        });
+      }
 
       if (_celebrating != null) {
         HapticFeedback.mediumImpact();
@@ -190,11 +220,6 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
       _micPulseController.reset();
       setState(() => _isRecording = false);
       HapticFeedback.lightImpact();
-
-      // If user has entered text via voice/dictation or had input, send it
-      if (_input.text.trim().isNotEmpty) {
-        await _send(plan);
-      }
     } else {
       // Start recording
       HapticFeedback.mediumImpact();
@@ -211,10 +236,17 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
           : session.target.code;
 
       // Start actual browser microphone recognition
-      final started = WebVoiceService.instance.startListening(langCode: langTag);
+      final started = WebVoiceService.instance.startListening(
+        langCode: langTag,
+      );
       if (!started) {
         // Fallback for browsers blocking or not supporting Web Speech API
-        debugPrint('[SpeakScreen] Speech recognition not available or permission denied.');
+        _micPulseController.stop();
+        setState(() {
+          _isRecording = false;
+          _error =
+              'Voice input is unavailable here. Try a supported browser and allow microphone access, or type your reply.';
+        });
       }
     }
   }
@@ -223,60 +255,163 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
   Widget build(BuildContext context) {
     final colors = context.colors;
     final lesson = ref.watch(activeLessonProvider);
+    final source = ref.watch(selectedSourceProvider);
     final plan = lesson?.conversation ?? ConversationPlan.empty;
-
     return Scaffold(
+      bottomNavigationBar: TalkloomNavigationBar(
+        selectedIndex: 1,
+        onDestinationSelected: (index) => context.go('/?tab=$index'),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: TlSpace.maxContentWidth,
-            ),
-            child: Stack(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Column(
               children: [
-                Column(
-                  children: [
-                    _buildHeader(plan),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: FluidVoiceOrb(
-                        size: 92,
-                        state: _isSending
-                            ? VoiceOrbState.thinking
-                            : (_isSpeaking
-                                ? VoiceOrbState.speaking
-                                : (_isRecording
-                                    ? VoiceOrbState.listening
-                                    : VoiceOrbState.idle)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Back to Today',
+                        onPressed: () => context.go(TlRoutes.home),
+                        icon: const Icon(Icons.arrow_back),
                       ),
-                    ),
-                    MissionTracker(
-                      totalTargets: plan.hiddenTargets.length,
-                      captured: _captured,
-                    ),
-                    const SizedBox(height: TlSpace.sm),
-                    Expanded(child: _buildTranscript(plan)),
-                    if (_error != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: TlSpace.gutter,
-                          vertical: TlSpace.xs,
-                        ),
-                        child: TlErrorState(
-                          message: _error!,
-                          onRetry: () => setState(() => _error = null),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Let’s talk about it.',
+                          style: context.type.title,
                         ),
                       ),
-                    _buildComposer(plan, colors),
-                  ],
-                ),
-                if (_celebrating != null)
-                  Positioned(
-                    left: TlSpace.gutter,
-                    right: TlSpace.gutter,
-                    top: 90,
-                    child: _CaptureBanner(target: _celebrating!),
+                      const Text('GERMAN'),
+                    ],
                   ),
+                ),
+                if (lesson == null)
+                  const Expanded(
+                    child: SingleChildScrollView(
+                      child: TlEmptyState(
+                        icon: LucideIcons.messagesSquare,
+                        title: 'Your content starts the conversation',
+                        message:
+                            'Add German content and open its speaking practice to begin.',
+                      ),
+                    ),
+                  )
+                else ...[
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scroll,
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              border: Border.all(color: colors.border),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.article_outlined,
+                                      color: colors.primary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        source?.title ?? 'Your shared content',
+                                        style: context.type.bodyStrong,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (source != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Text(
+                                      '${sourcePlatform(source)} · ${source.cefrLevel} · German',
+                                      style: context.type.caption,
+                                    ),
+                                  ),
+                                const Divider(height: 16),
+                                Text(
+                                  'YOUR CONVERSATION GOAL',
+                                  style: context.type.caption.copyWith(
+                                    color: colors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  plan.situation,
+                                  style: context.type.bodyStrong,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Your partner: ${plan.role}. Start small. Mistakes are welcome.',
+                                  style: context.type.caption,
+                                ),
+                                if (source != null &&
+                                    source.rawText.trim().isNotEmpty)
+                                  Material(
+                                    color: colors.surface,
+                                    child: ExpansionTile(
+                                      tilePadding: EdgeInsets.zero,
+                                      title: Text(
+                                        'Look back at the source',
+                                        style: context.type.caption,
+                                      ),
+                                      children: [
+                                        SizedBox(
+                                          height: 130,
+                                          child: SingleChildScrollView(
+                                            child: SelectableText(
+                                              source.rawText,
+                                              style: context.type.body,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          _buildTranscript(),
+                          if (_celebrating != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              child: Text(
+                                'Expression detected: ${_celebrating!.split(':').last}',
+                                style: context.type.caption,
+                              ),
+                            ),
+                          if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 8,
+                              ),
+                              child: TlErrorState(
+                                message: _error!,
+                                onRetry: () => setState(() => _error = null),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _buildComposer(plan),
+                ],
               ],
             ),
           ),
@@ -285,415 +420,148 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
     );
   }
 
-  Widget _buildHeader(ConversationPlan plan) {
+  Widget _buildTranscript() {
     final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        TlSpace.gutter,
-        TlSpace.sm,
-        TlSpace.gutter,
-        TlSpace.sm,
-      ),
-      child: Row(
-        children: [
-          TlPressable(
-            onTap: () => context.go(TlRoutes.home),
-            child: Icon(
-              LucideIcons.chevronLeft,
-              size: 24,
-              color: colors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: TlSpace.xs),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  plan.situation,
-                  style: context.type.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  'Speaking with a ${plan.role}',
-                  style: context.type.caption,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTranscript(ConversationPlan plan) {
-    final colors = context.colors;
-
     if (_messages.isEmpty) {
-      return TlEmptyState(
+      return const TlEmptyState(
         icon: LucideIcons.messagesSquare,
-        title: 'Say the first thing',
+        title: 'What caught your attention?',
         message:
-            'You are talking to a ${plan.role}. Start however feels natural — '
-            'mistakes are fine.',
+            'Start with one sentence in German. Speak into the microphone or type below.',
       );
     }
-
     return ListView.builder(
-      controller: _scroll,
-      padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
       itemCount: _messages.length + (_isSending ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index >= _messages.length) {
-          return Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: TlSpace.xs),
-              child: TlSkeleton(height: 42, width: 120, radius: TlRadius.md),
+        if (index == _messages.length) {
+          return Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              'Your partner is thinking…',
+              style: context.type.caption,
             ),
           );
         }
-
         final message = _messages[index];
-        final isLearner = message.speaker == _Speaker.learner;
-
-        return TlEntrance(
-          child: Align(
-            alignment: isLearner ? Alignment.centerRight : Alignment.centerLeft,
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-              ),
-              margin: const EdgeInsets.symmetric(vertical: TlSpace.xxs),
-              padding: const EdgeInsets.symmetric(
-                horizontal: TlSpace.md,
-                vertical: TlSpace.sm,
-              ),
-              decoration: BoxDecoration(
-                color: isLearner ? colors.primary : colors.surface,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(TlRadius.md),
-                  topRight: const Radius.circular(TlRadius.md),
-                  bottomLeft: Radius.circular(
-                    isLearner ? TlRadius.md : TlRadius.sm,
-                  ),
-                  bottomRight: Radius.circular(
-                    isLearner ? TlRadius.sm : TlRadius.md,
-                  ),
+        final learner = message.speaker == _Speaker.learner;
+        final text = message.text.replaceAllMapped(
+          RegExp(r'\[\[new:([^:|\]]+)(?::([^\]]+))?\]\]'),
+          (match) => match.group(1)!,
+        );
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 17,
+                backgroundColor: learner
+                    ? colors.primarySoft
+                    : colors.surfaceRaised,
+                child: Icon(
+                  learner ? Icons.person_outline : Icons.chat_bubble_outline,
+                  size: 18,
+                  color: colors.primary,
                 ),
-                border: isLearner ? null : Border.all(color: colors.border),
               ),
-              child: _buildMessageContent(message, isLearner, colors),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      learner ? 'You' : 'Conversation partner',
+                      style: context.type.caption,
+                    ),
+                    if (!learner && message.responseMode == 'template_fallback')
+                      Text(
+                        'Practice reply · template fallback',
+                        style: context.type.caption.copyWith(
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    const SizedBox(height: 5),
+                    SelectableText(text, style: context.type.body),
+                    if (!learner)
+                      IconButton(
+                        tooltip: WebVoiceService.instance.canSpeak
+                            ? 'Listen to this reply'
+                            : WebVoiceService.instance.speechUnavailableReason,
+                        onPressed: WebVoiceService.instance.canSpeak
+                            ? () => WebVoiceService.instance.speak(text)
+                            : null,
+                        icon: const Icon(Icons.volume_up_outlined, size: 18),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 
-  Widget _buildMessageContent(_Message message, bool isLearner, TlColors colors) {
-    if (isLearner) {
-      return Text(
-        message.text,
-        style: context.type.body.copyWith(color: colors.onAccent),
-      );
-    }
-
-    // Tutor messages: Parse [[new:word:meaning]] or standard text
-    final rawText = message.text;
-    final regex = RegExp(r'\[\[new:([^:|\]]+)(?::([^\]]+))?\]\]');
-    final matches = regex.allMatches(rawText).toList();
-
-    if (matches.isEmpty) {
-      return Text(
-        rawText,
-        style: context.type.body.copyWith(color: colors.textPrimary),
-      );
-    }
-
-    final spans = <InlineSpan>[];
-    int lastEnd = 0;
-
-    for (final match in matches) {
-      if (match.start > lastEnd) {
-        spans.add(
-          TextSpan(
-            text: rawText.substring(lastEnd, match.start),
-            style: context.type.body.copyWith(color: colors.textPrimary),
-          ),
-        );
-      }
-
-      final word = match.group(1)?.trim() ?? '';
-      final meaning = match.group(2)?.trim() ?? '';
-
-      spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Tooltip(
-            message: meaning.isNotEmpty ? 'New word: $meaning' : 'New word introduced',
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colors.primarySoft,
-                borderRadius: TlRadius.controlRadius,
-                border: Border.all(
-                  color: colors.primary.withValues(alpha: 0.4),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    word,
-                    style: context.type.bodyStrong.copyWith(
-                      color: colors.primary,
-                      fontSize: 13.5,
-                    ),
-                  ),
-                  if (meaning.isNotEmpty) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      '($meaning)',
-                      style: context.type.caption.copyWith(
-                        color: colors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      lastEnd = match.end;
-    }
-
-    if (lastEnd < rawText.length) {
-      spans.add(
-        TextSpan(
-          text: rawText.substring(lastEnd),
-          style: context.type.body.copyWith(color: colors.textPrimary),
-        ),
-      );
-    }
-
-    return Text.rich(
-      TextSpan(children: spans),
-    );
-  }
-
-  Widget _buildComposer(ConversationPlan plan, TlColors colors) {
-    final session = ref.watch(learningSessionProvider);
-    final languageName = session.target.englishName;
-
+  Widget _buildComposer(ConversationPlan plan) {
+    final colors = context.colors;
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        TlSpace.gutter,
-        TlSpace.sm,
-        TlSpace.gutter,
-        TlSpace.sm,
-      ),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.canvas,
         border: Border(top: BorderSide(color: colors.border)),
       ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_isRecording)
-              Padding(
-                padding: const EdgeInsets.only(bottom: TlSpace.xs),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: TlSpace.xs),
-                    Text(
-                      'Listening to your $languageName speech… (tap mic or send to finish)',
-                      style: context.type.caption.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _isRecording
+                      ? 'Listening… tap stop, then review your words.'
+                      : 'Say it in German. You can also type.',
+                  style: context.type.caption,
                 ),
               ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _input,
-                    enabled: !_isSending,
-                    minLines: 1,
-                    maxLines: 4,
-                    textInputAction: TextInputAction.send,
-                    style: context.type.body.copyWith(color: colors.textPrimary),
-                    onSubmitted: (_) => _send(plan),
-                    decoration: InputDecoration(
-                      hintText: _isRecording
-                          ? 'Speak now in $languageName…'
-                          : 'Reply in $languageName…',
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: TlSpace.md,
-                        vertical: TlSpace.sm,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: TlRadius.pillRadius,
-                        borderSide: BorderSide(color: colors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: TlRadius.pillRadius,
-                        borderSide: BorderSide(
-                          color: _isRecording ? colors.primary : colors.border,
-                          width: _isRecording ? 1.5 : 1.0,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: TlRadius.pillRadius,
-                        borderSide: BorderSide(color: colors.primary, width: 1.5),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: TlSpace.xs),
-                // Dedicated Microphone / Voice Input Button
-                AnimatedBuilder(
-                  animation: _micPulseController,
-                  builder: (context, child) {
-                    final scale = _isRecording
-                        ? 1.0 + (_micPulseController.value * 0.12)
-                        : 1.0;
-                    return Transform.scale(
-                      scale: scale,
-                      child: TlPressable(
-                        onTap: () => _toggleRecording(plan),
-                        child: Container(
-                          height: 48,
-                          width: 48,
-                          decoration: BoxDecoration(
-                            color: _isRecording
-                                ? colors.primary
-                                : colors.surfaceRaised,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _isRecording
-                                  ? colors.primary
-                                  : colors.border,
-                              width: 1.5,
-                            ),
-                            boxShadow: _isRecording
-                                ? [
-                                    BoxShadow(
-                                      color: colors.primary.withValues(alpha: 0.35),
-                                      blurRadius: 12,
-                                      spreadRadius: 2,
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Icon(
-                            _isRecording ? LucideIcons.mic : LucideIcons.mic,
-                            color: _isRecording
-                                ? colors.onAccent
-                                : colors.primary,
-                            size: 21,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: TlSpace.xs),
-                // Send Button
-                TlPressable(
-                  onTap: () => _send(plan),
-                  child: Container(
-                    height: 48,
-                    width: 48,
-                    decoration: BoxDecoration(
-                      color: _isSending ? colors.borderStrong : colors.success,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      LucideIcons.arrowUp,
-                      color: colors.onAccent,
-                      size: 21,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Fires when the learner produces a target without being prompted — the one
-/// moment in the product that no flashcard app can manufacture.
-class _CaptureBanner extends StatelessWidget {
-  const _CaptureBanner({required this.target});
-
-  final String target;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final label = target.contains(':') ? target.split(':').last : target;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: TlMotion.slow,
-      curve: TlMotion.emphasized,
-      builder: (context, value, child) => Opacity(
-        opacity: value.clamp(0, 1),
-        child: Transform.scale(scale: 0.9 + 0.1 * value, child: child),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: TlSpace.md,
-          vertical: TlSpace.sm,
-        ),
-        decoration: BoxDecoration(
-          color: colors.success,
-          borderRadius: TlRadius.controlRadius,
-          boxShadow: [
-            BoxShadow(
-              color: colors.shadow,
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(LucideIcons.sparkles, size: 19, color: colors.onAccent),
-            const SizedBox(width: TlSpace.xs),
-            Expanded(
-              child: Text(
-                'You said "$label" on your own',
-                style: context.type.bodyStrong.copyWith(color: colors.onAccent),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _isSending ? null : () => _toggleRecording(plan),
+                icon: Icon(_isRecording ? Icons.stop : Icons.mic_none),
+                label: Text(_isRecording ? 'Stop' : 'Speak'),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _input,
+                  enabled: !_isSending,
+                  minLines: 1,
+                  maxLines: 4,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _send(plan),
+                  decoration: const InputDecoration(
+                    labelText: 'Your German reply',
+                    hintText: 'Ich denke, dass…',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filled(
+                tooltip: 'Send reply',
+                onPressed: _isSending ? null : () => _send(plan),
+                icon: const Icon(Icons.arrow_upward),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

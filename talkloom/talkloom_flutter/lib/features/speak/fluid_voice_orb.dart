@@ -70,7 +70,8 @@ class _FluidVoiceOrbState extends State<FluidVoiceOrb>
           VoiceOrbState.idle => 0.04,
           VoiceOrbState.listening => 0.12 + (widget.soundLevel * 0.15),
           VoiceOrbState.thinking => 0.08,
-          VoiceOrbState.speaking => 0.18 + (math.sin(progress * math.pi * 12).abs() * 0.14),
+          VoiceOrbState.speaking =>
+            0.18 + (math.sin(progress * math.pi * 12).abs() * 0.14),
         };
 
         return SizedBox(
@@ -88,10 +89,17 @@ class _FluidVoiceOrbState extends State<FluidVoiceOrb>
                   gradient: RadialGradient(
                     colors: [
                       switch (widget.state) {
-                        VoiceOrbState.idle => TlPalette.brassGold.withValues(alpha: 0.15),
-                        VoiceOrbState.listening => const Color(0xFF00E5FF).withValues(alpha: 0.28),
-                        VoiceOrbState.thinking => const Color(0xFFA855F7).withValues(alpha: 0.32),
-                        VoiceOrbState.speaking => TlPalette.brassGoldLight.withValues(alpha: 0.35),
+                        VoiceOrbState.idle => TlPalette.brassGold.withValues(
+                          alpha: 0.15,
+                        ),
+                        VoiceOrbState.listening => const Color(
+                          0xFF00E5FF,
+                        ).withValues(alpha: 0.28),
+                        VoiceOrbState.thinking => const Color(
+                          0xFFA855F7,
+                        ).withValues(alpha: 0.32),
+                        VoiceOrbState.speaking =>
+                          TlPalette.brassGoldLight.withValues(alpha: 0.35),
                       },
                       Colors.transparent,
                     ],
@@ -183,29 +191,29 @@ class _FluidBlobPainter extends CustomPainter {
     // Fluid Mesh Gradient Colors
     final List<Color> gradientColors = switch (state) {
       VoiceOrbState.idle => [
-          const Color(0xFFD4AF37), // Soft brass
-          const Color(0xFF996515), // Deep gold
-          const Color(0xFF1E1B18), // Obsidian
-          const Color(0xFFE5C158), // Light gold
-        ],
+        const Color(0xFFD4AF37), // Soft brass
+        const Color(0xFF996515), // Deep gold
+        const Color(0xFF1E1B18), // Obsidian
+        const Color(0xFFE5C158), // Light gold
+      ],
       VoiceOrbState.listening => [
-          const Color(0xFF00E5FF), // Electric cyan
-          const Color(0xFF3B82F6), // Azure blue
-          const Color(0xFF8B5CF6), // Royal violet
-          const Color(0xFF06B6D4), // Teal
-        ],
+        const Color(0xFF00E5FF), // Electric cyan
+        const Color(0xFF3B82F6), // Azure blue
+        const Color(0xFF8B5CF6), // Royal violet
+        const Color(0xFF06B6D4), // Teal
+      ],
       VoiceOrbState.thinking => [
-          const Color(0xFFA855F7), // Magenta purple
-          const Color(0xFFEC4899), // Pink
-          const Color(0xFF6366F1), // Indigo
-          const Color(0xFF8B5CF6), // Violet
-        ],
+        const Color(0xFFA855F7), // Magenta purple
+        const Color(0xFFEC4899), // Pink
+        const Color(0xFF6366F1), // Indigo
+        const Color(0xFF8B5CF6), // Violet
+      ],
       VoiceOrbState.speaking => [
-          const Color(0xFFFFD700), // Brilliant gold
-          const Color(0xFFFF8A00), // Amber flame
-          const Color(0xFF9333EA), // Purple accent
-          const Color(0xFFFFC000), // Warm brass
-        ],
+        const Color(0xFFFFD700), // Brilliant gold
+        const Color(0xFFFF8A00), // Amber flame
+        const Color(0xFF9333EA), // Purple accent
+        const Color(0xFFFFC000), // Warm brass
+      ],
     };
 
     final paint = Paint()
@@ -219,7 +227,12 @@ class _FluidBlobPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Outer subtle shadow
-    canvas.drawShadow(path, gradientColors.first.withValues(alpha: 0.4), 16, true);
+    canvas.drawShadow(
+      path,
+      gradientColors.first.withValues(alpha: 0.4),
+      16,
+      true,
+    );
     canvas.drawPath(path, paint);
 
     // Inner Specular Rim Glow

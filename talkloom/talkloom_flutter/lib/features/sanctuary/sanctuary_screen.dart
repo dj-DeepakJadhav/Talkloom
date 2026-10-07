@@ -57,23 +57,24 @@ class _SanctuaryScreenState extends ConsumerState<SanctuaryScreen> {
 
   Future<void> _pickDocument({bool cameraMode = false}) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: cameraMode ? FileType.image : FileType.custom,
-        allowedExtensions: cameraMode ? null : ['pdf', 'txt', 'png', 'jpg', 'jpeg'],
-        withData: true,
+        allowedExtensions: cameraMode
+            ? null
+            : ['pdf', 'txt', 'png', 'jpg', 'jpeg'],
       );
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        final bytes = file.bytes;
-        if (bytes != null) {
+      if (result.isNotEmpty) {
+        final file = result.first;
+        final bytes = await file.readAsBytes();
+        if (bytes.isNotEmpty) {
           final ext = file.extension?.toLowerCase() ?? 'txt';
           final mime = (ext == 'pdf')
               ? 'application/pdf'
               : (ext == 'png'
-                  ? 'image/png'
-                  : (ext == 'jpg' || ext == 'jpeg'
-                      ? 'image/jpeg'
-                      : 'text/plain'));
+                    ? 'image/png'
+                    : (ext == 'jpg' || ext == 'jpeg'
+                          ? 'image/jpeg'
+                          : 'text/plain'));
           setState(() {
             _detectedFileName = file.name;
             _mediaMimeType = mime;
@@ -143,7 +144,9 @@ class _SanctuaryScreenState extends ConsumerState<SanctuaryScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: TlSpace.maxContentWidth),
+            constraints: const BoxConstraints(
+              maxWidth: TlSpace.maxContentWidth,
+            ),
             child: Column(
               children: [
                 // Top Header Row: Logo & Target Language Pill
@@ -252,7 +255,9 @@ class _SanctuaryScreenState extends ConsumerState<SanctuaryScreen> {
 
                 // Segmented Tabs: [ 📖 Words ] [ 💬 Phrases ] [ ⚡ Grammar ]
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: TlSpace.gutter),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: TlSpace.gutter,
+                  ),
                   child: _VaultSegmentedTabs(
                     selectedIndex: _activeTabIndex,
                     onTabSelected: (index) {
@@ -489,7 +494,9 @@ class _GoogleStyleOmniBar extends StatelessWidget {
                     boxShadow: hasContent
                         ? [
                             BoxShadow(
-                              color: TlPalette.brassGold.withValues(alpha: 0.35),
+                              color: TlPalette.brassGold.withValues(
+                                alpha: 0.35,
+                              ),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -604,8 +611,12 @@ class _VaultSegmentedTabs extends StatelessWidget {
                     Text(
                       tab.$2,
                       style: context.type.labelSmall.copyWith(
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? colors.textPrimary : colors.textMuted,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? colors.textPrimary
+                            : colors.textMuted,
                       ),
                     ),
                   ],
@@ -650,7 +661,8 @@ class _VocabularyTabContent extends ConsumerWidget {
         orElse: () => _EmptyVaultPlaceholder(
           icon: LucideIcons.bookOpen,
           title: 'Your Vocabulary Vault',
-          message: 'Synthesize your first lesson above to extract native words.',
+          message:
+              'Synthesize your first lesson above to extract native words.',
         ),
       );
     }
@@ -723,47 +735,16 @@ class _VocabularyTabContent extends ConsumerWidget {
                   ],
                 ),
               ),
-              // Spoken Recall Strength (Mural Pattern: 1 · Fragile, 2 · Growing, 3 · Steady)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (int bar = 0; bar < 3; bar++)
-                        Container(
-                          width: 14,
-                          height: 4,
-                          margin: const EdgeInsets.only(left: 3),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2),
-                            color: bar <= (index % 3)
-                                ? TlPalette.brassGold
-                                : colors.borderStrong.withValues(alpha: 0.3),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    (index % 3) == 0
-                        ? '1 · Fragile'
-                        : ((index % 3) == 1 ? '2 · Growing' : '3 · Steady'),
-                    style: context.type.caption.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(width: 8),
               TlPressable(
                 onTap: () {
-                  final textToSpeak =
-                      article.isNotEmpty ? '$article ${item.lemma}' : item.lemma;
-                  WebVoiceService.instance.speak(textToSpeak, langCode: 'de-DE');
+                  final textToSpeak = article.isNotEmpty
+                      ? '$article ${item.lemma}'
+                      : item.lemma;
+                  WebVoiceService.instance.speak(
+                    textToSpeak,
+                    langCode: 'de-DE',
+                  );
                   HapticFeedback.lightImpact();
                 },
                 child: Container(
@@ -859,7 +840,8 @@ class _PhrasesTabContent extends ConsumerWidget {
         }
       }
       for (final item in activeLesson.vocabulary) {
-        if (item.sourceContext.isNotEmpty && !phrases.contains(item.sourceContext)) {
+        if (item.sourceContext.isNotEmpty &&
+            !phrases.contains(item.sourceContext)) {
           phrases.add(item.sourceContext);
         }
       }
@@ -869,7 +851,8 @@ class _PhrasesTabContent extends ConsumerWidget {
       return const _EmptyVaultPlaceholder(
         icon: LucideIcons.messageSquare,
         title: 'No phrases yet',
-        message: 'Synthesize a video or article to capture natural spoken sentences.',
+        message:
+            'Synthesize a video or article to capture natural spoken sentences.',
       );
     }
 
@@ -945,7 +928,8 @@ class _GrammarTabContent extends ConsumerWidget {
       return const _EmptyVaultPlaceholder(
         icon: LucideIcons.zap,
         title: 'Grammar Patterns',
-        message: 'Synthesized lessons automatically extract structural grammar blueprints.',
+        message:
+            'Synthesized lessons automatically extract structural grammar blueprints.',
       );
     }
 
@@ -971,7 +955,10 @@ class _GrammarTabContent extends ConsumerWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.primarySoft,
                       borderRadius: BorderRadius.circular(6),
@@ -1176,8 +1163,9 @@ class _VisualSourceCardState extends ConsumerState<_VisualSourceCard> {
 
     setState(() => _opening = true);
     try {
-      final lesson =
-          await ref.read(lessonRepositoryProvider).lessonForSource(id);
+      final lesson = await ref
+          .read(lessonRepositoryProvider)
+          .lessonForSource(id);
       if (lesson != null && mounted) {
         ref
             .read(activeLessonProvider.notifier)

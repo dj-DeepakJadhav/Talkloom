@@ -9,6 +9,9 @@ fields:
   targetLanguage: String
   cefrLevel: String
   createdAt: DateTime
+  isArchived: bool, default=false
 indexes:
   source_user_lang_idx:
-    fields: userId, targetLanguage
+    fields: userId, targetLanguage, isArchived
+  source_url_lang_idx:
+    fields: url, targetLanguage

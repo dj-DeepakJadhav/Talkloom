@@ -10,6 +10,7 @@ import '../../domain/lesson_content.dart';
 import '../settings/api_keys_screen.dart';
 
 enum VaultCategory { words, phrases, grammar }
+
 enum MasteryFilter { all, recognized, active }
 
 /// Tab 4: Lexicon & Grammar Vault (Tactile, Minimal Text, Glanceable)
@@ -80,7 +81,8 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                     const Spacer(),
                     learnerState.maybeWhen(
                       data: (state) {
-                        final total = (state?.activeWords.length ?? 0) +
+                        final total =
+                            (state?.activeWords.length ?? 0) +
                             (state?.recognizedWords.length ?? 0);
                         return Container(
                           padding: const EdgeInsets.symmetric(
@@ -139,7 +141,10 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: colors.border),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 2,
+                  ),
                   child: Row(
                     children: [
                       Icon(
@@ -150,7 +155,9 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
-                          onChanged: (v) => setState(() => _searchQuery = v.trim().toLowerCase()),
+                          onChanged: (v) => setState(
+                            () => _searchQuery = v.trim().toLowerCase(),
+                          ),
                           style: context.type.body.copyWith(
                             color: colors.textPrimary,
                             fontSize: 13,
@@ -163,7 +170,9 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                             ),
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                            ),
                           ),
                         ),
                       ),
@@ -196,9 +205,24 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                   ),
                   child: Row(
                     children: [
-                      _buildTabButton(VaultCategory.words, 'Words', LucideIcons.bookOpen, colors),
-                      _buildTabButton(VaultCategory.phrases, 'Phrases', LucideIcons.messageSquare, colors),
-                      _buildTabButton(VaultCategory.grammar, 'Grammar', LucideIcons.zap, colors),
+                      _buildTabButton(
+                        VaultCategory.words,
+                        'Words',
+                        LucideIcons.bookOpen,
+                        colors,
+                      ),
+                      _buildTabButton(
+                        VaultCategory.phrases,
+                        'Phrases',
+                        LucideIcons.messageSquare,
+                        colors,
+                      ),
+                      _buildTabButton(
+                        VaultCategory.grammar,
+                        'Grammar',
+                        LucideIcons.zap,
+                        colors,
+                      ),
                     ],
                   ),
                 ),
@@ -217,9 +241,17 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                     children: [
                       _buildFilterChip(MasteryFilter.all, 'All', colors),
                       const SizedBox(width: 6),
-                      _buildFilterChip(MasteryFilter.active, 'Active Spoken', colors),
+                      _buildFilterChip(
+                        MasteryFilter.active,
+                        'Active Spoken',
+                        colors,
+                      ),
                       const SizedBox(width: 6),
-                      _buildFilterChip(MasteryFilter.recognized, 'Recognized', colors),
+                      _buildFilterChip(
+                        MasteryFilter.recognized,
+                        'Recognized',
+                        colors,
+                      ),
                     ],
                   ),
                 ),
@@ -227,9 +259,19 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
               // Content Area
               Expanded(
                 child: switch (_selectedCategory) {
-                  VaultCategory.words => _buildWordsList(activeLesson, learnerState, colors),
-                  VaultCategory.phrases => _buildPhrasesList(activeLesson, colors),
-                  VaultCategory.grammar => _buildGrammarList(activeLesson, colors),
+                  VaultCategory.words => _buildWordsList(
+                    activeLesson,
+                    learnerState,
+                    colors,
+                  ),
+                  VaultCategory.phrases => _buildPhrasesList(
+                    activeLesson,
+                    colors,
+                  ),
+                  VaultCategory.grammar => _buildGrammarList(
+                    activeLesson,
+                    colors,
+                  ),
                 },
               ),
             ],
@@ -331,20 +373,12 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
   ) {
     // 1. Gather all words from active lesson + base learned vault
     final lessonWords = activeLesson?.vocabulary ?? const <VocabularyItem>[];
-    final activeWords = <VocabularyItem>[
-      ...lessonWords,
-      if (lessonWords.isEmpty) ...const [
-        VocabularyItem(id: 'kaution', lemma: 'Kaution', article: 'die', meaning: 'security deposit', sourceContext: 'Die Kaution beträgt 3 Monatskaltmieten.'),
-        VocabularyItem(id: 'mietvertrag', lemma: 'Mietvertrag', article: 'der', meaning: 'lease contract', sourceContext: 'Der Mietvertrag ist gültig.'),
-        VocabularyItem(id: 'kündigen', lemma: 'kündigen', article: '', meaning: 'to terminate / give notice', sourceContext: 'Ich kündige die Wohnung rechtzeitig.'),
-        VocabularyItem(id: 'nebenkosten', lemma: 'Nebenkosten', article: 'die', meaning: 'utility / incidental costs', sourceContext: 'Die Nebenkosten werden jährlich abgerechnet.'),
-        VocabularyItem(id: 'mietpreisbremse', lemma: 'Mietpreisbremse', article: 'die', meaning: 'rent control cap', sourceContext: 'Die Mietpreisbremse schützt Mieter.'),
-      ],
-    ];
+    final activeWords = lessonWords;
 
     final filtered = activeWords.where((item) {
       if (_searchQuery.isNotEmpty) {
-        final matches = item.lemma.toLowerCase().contains(_searchQuery) ||
+        final matches =
+            item.lemma.toLowerCase().contains(_searchQuery) ||
             item.meaning.toLowerCase().contains(_searchQuery);
         if (!matches) return false;
       }
@@ -387,7 +421,10 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
             children: [
               if (article.isNotEmpty) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: articleColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
@@ -425,63 +462,34 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                   ],
                 ),
               ),
-              // Spoken Recall Strength (Mural Pattern: 1 · Fragile, 2 · Growing, 3 · Steady)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (int bar = 0; bar < 3; bar++)
-                        Container(
-                          width: 14,
-                          height: 4,
-                          margin: const EdgeInsets.only(left: 3),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2),
-                            color: bar <= (i % 3)
-                                ? TlPalette.brassGold
-                                : colors.borderStrong.withValues(alpha: 0.3),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    (i % 3) == 0
-                        ? '1 · Fragile'
-                        : ((i % 3) == 1 ? '2 · Growing' : '3 · Steady'),
-                    style: context.type.caption.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textMuted,
+              const SizedBox(width: 8),
+              // Only offer pronunciation when the platform provides speech.
+              if (WebVoiceService.instance.canSpeak)
+                TlPressable(
+                  onTap: () {
+                    final textToSpeak = article.isNotEmpty
+                        ? '$article ${item.lemma}'
+                        : item.lemma;
+                    WebVoiceService.instance.speak(
+                      textToSpeak,
+                      langCode: 'de-DE',
+                    );
+                    HapticFeedback.lightImpact();
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceRaised,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      LucideIcons.volume2,
+                      size: 14,
+                      color: colors.primary,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(width: 8),
-              // Audio Pronunciation Button
-              TlPressable(
-                onTap: () {
-                  final textToSpeak = article.isNotEmpty ? '$article ${item.lemma}' : item.lemma;
-                  WebVoiceService.instance.speak(textToSpeak, langCode: 'de-DE');
-                  HapticFeedback.lightImpact();
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceRaised,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    LucideIcons.volume2,
-                    size: 14,
-                    color: colors.primary,
-                  ),
                 ),
-              ),
             ],
           ),
         );
@@ -498,7 +506,8 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
         }
       }
       for (final item in activeLesson.vocabulary) {
-        if (item.sourceContext.isNotEmpty && !phrases.contains(item.sourceContext)) {
+        if (item.sourceContext.isNotEmpty &&
+            !phrases.contains(item.sourceContext)) {
           phrases.add(item.sourceContext);
         }
       }
@@ -578,21 +587,27 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
   Widget _buildGrammarList(LessonContent? activeLesson, TlColors colors) {
     final rules = <GrammarRule>[
       ...?(activeLesson?.grammar),
-      if (activeLesson?.grammar == null || activeLesson!.grammar.isEmpty) ...const [
+      if (activeLesson?.grammar == null ||
+          activeLesson!.grammar.isEmpty) ...const [
         GrammarRule(
           concept: 'Wechselpräpositionen (Akkusativ vs. Dativ)',
-          sourceSentence: 'Ich zahle die Kaution auf das Konto (Akk). Das Geld liegt auf dem Konto (Dat).',
-          explanation: 'Wohin? (Motion/Destination) = Akkusativ | Wo? (Location) = Dativ',
+          sourceSentence:
+              'Ich zahle die Kaution auf das Konto (Akk). Das Geld liegt auf dem Konto (Dat).',
+          explanation:
+              'Wohin? (Motion/Destination) = Akkusativ | Wo? (Location) = Dativ',
         ),
         GrammarRule(
           concept: 'Nebensätze mit "weil" & "dass"',
           sourceSentence: 'Ich unterschreibe, weil der Vertrag fair ist.',
-          explanation: 'Conjunction moves the conjugated finite verb to the very end of the subordinate clause.',
+          explanation:
+              'Conjunction moves the conjugated finite verb to the very end of the subordinate clause.',
         ),
         GrammarRule(
           concept: 'Passiv mit Modalverben',
-          sourceSentence: 'Die Kaution muss innerhalb von 6 Monaten erstattet werden.',
-          explanation: 'Formula: Modalverb (pos 2) + Partizip II + werden (clause end).',
+          sourceSentence:
+              'Die Kaution muss innerhalb von 6 Monaten erstattet werden.',
+          explanation:
+              'Formula: Modalverb (pos 2) + Partizip II + werden (clause end).',
         ),
       ],
     ];

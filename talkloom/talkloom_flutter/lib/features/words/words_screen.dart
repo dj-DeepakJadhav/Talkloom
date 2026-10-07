@@ -16,9 +16,8 @@ import '../../domain/lesson_content.dart';
 /// - Subtitle: "Familiar words, ready for another conversation."
 /// - Search: "Find a word"
 /// - Sage/Dark Panel: "They'll grow from here." leaf banner when starting
-/// - Word List: Clean typography, German lemma in rounded headline, English meaning,
-///   and 3-bar spoken recall gauge (1 · Fragile, 2 · Growing, 3 · Steady).
-/// - 1-tap Word detail sheet with example sentence, audio pronunciation, and recall strength.
+/// - Word List: persisted vocabulary with its meaning and source context.
+/// - 1-tap Word detail sheet with context and available pronunciation.
 class WordsScreen extends ConsumerStatefulWidget {
   const WordsScreen({super.key});
 
@@ -46,12 +45,16 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
         return Align(
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: TlSpace.maxContentWidth),
+            constraints: const BoxConstraints(
+              maxWidth: TlSpace.maxContentWidth,
+            ),
             child: Container(
               padding: const EdgeInsets.fromLTRB(28, 16, 28, 36),
               decoration: BoxDecoration(
                 color: colors.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 border: Border(top: BorderSide(color: colors.border)),
               ),
               child: Column(
@@ -73,33 +76,41 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          item.article.isNotEmpty ? '${item.article} ${item.lemma}' : item.lemma,
+                          item.article.isNotEmpty
+                              ? '${item.article} ${item.lemma}'
+                              : item.lemma,
                           style: ctx.type.display.copyWith(
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      TlPressable(
-                        onTap: () {
-                          final text = item.article.isNotEmpty ? '${item.article} ${item.lemma}' : item.lemma;
-                          WebVoiceService.instance.speak(text, langCode: 'de-DE');
-                          HapticFeedback.lightImpact();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceRaised,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: colors.border),
-                          ),
-                          child: const Icon(
-                            LucideIcons.volume2,
-                            size: 20,
-                            color: TlPalette.brassGold,
+                      if (WebVoiceService.instance.canSpeak)
+                        TlPressable(
+                          onTap: () {
+                            final text = item.article.isNotEmpty
+                                ? '${item.article} ${item.lemma}'
+                                : item.lemma;
+                            WebVoiceService.instance.speak(
+                              text,
+                              langCode: 'de-DE',
+                            );
+                            HapticFeedback.lightImpact();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: colors.surfaceRaised,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colors.border),
+                            ),
+                            child: const Icon(
+                              LucideIcons.volume2,
+                              size: 20,
+                              color: TlPalette.brassGold,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -111,30 +122,9 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  // Recall gauge
-                  Row(
-                    children: [
-                      for (int bar = 0; bar < 3; bar++)
-                        Container(
-                          width: 18,
-                          height: 5,
-                          margin: const EdgeInsets.only(right: 4),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2.5),
-                            color: bar <= 1
-                                ? TlPalette.brassGold
-                                : colors.borderStrong.withValues(alpha: 0.3),
-                          ),
-                        ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '2 · Growing',
-                        style: ctx.type.caption.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Saved from your content',
+                    style: ctx.type.caption.copyWith(color: colors.textMuted),
                   ),
                   const SizedBox(height: 20),
                   if (item.sourceContext.isNotEmpty) ...[
@@ -157,13 +147,6 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                     ),
                     const SizedBox(height: 14),
                   ],
-                  Text(
-                    'Seen across live conversations · Spoken recall strengthening',
-                    style: ctx.type.caption.copyWith(
-                      color: colors.textMuted,
-                      fontSize: 12,
-                    ),
-                  ),
                   const SizedBox(height: 12),
                 ],
               ),
@@ -177,20 +160,12 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final activeLesson = ref.watch(activeLessonProvider);
-
-    // Active or baseline words
-    final lessonWords = activeLesson?.vocabulary ?? const <VocabularyItem>[];
-    final allWords = <VocabularyItem>[
-      ...lessonWords,
-      if (lessonWords.isEmpty) ...const [
-        VocabularyItem(id: 'kaution', lemma: 'Kaution', article: 'die', meaning: 'security deposit', sourceContext: 'Die Kaution beträgt drei Monatskaltmieten.'),
-        VocabularyItem(id: 'mietvertrag', lemma: 'Mietvertrag', article: 'der', meaning: 'lease contract', sourceContext: 'Der Mietvertrag ist ab sofort gültig.'),
-        VocabularyItem(id: 'kuendigen', lemma: 'kündigen', article: '', meaning: 'to terminate / give notice', sourceContext: 'Ich kündige die Wohnung fristgerecht.'),
-        VocabularyItem(id: 'nebenkosten', lemma: 'Nebenkosten', article: 'die', meaning: 'utility charges', sourceContext: 'Die Nebenkosten werden jährlich abgerechnet.'),
-        VocabularyItem(id: 'mietpreisbremse', lemma: 'Mietpreisbremse', article: 'die', meaning: 'rent control cap', sourceContext: 'Die Mietpreisbremse schützt Mieter vor Mieterhöhungen.'),
-      ],
-    ];
+    final savedLessons = ref.watch(lessonsProvider);
+    final allWords =
+        savedLessons.asData?.value
+            .expand((lesson) => LessonContent.fromLesson(lesson).vocabulary)
+            .toList() ??
+        const <VocabularyItem>[];
 
     final filtered = allWords.where((w) {
       if (_searchQuery.isNotEmpty) {
@@ -216,7 +191,10 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: colors.border),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -228,7 +206,8 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        onChanged: (val) =>
+                            setState(() => _searchQuery = val.trim()),
                         style: context.type.body.copyWith(
                           fontSize: 15,
                           color: colors.textPrimary,
@@ -293,7 +272,14 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
               const SizedBox(height: 24),
 
               // "They'll grow from here" Banner matching 05-words.png
-              if (filtered.isEmpty && _searchQuery.isEmpty)
+              if (savedLessons.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (savedLessons.hasError)
+                Text(
+                  'Your words could not be loaded. Pull to refresh or reopen this screen.',
+                  style: context.type.body,
+                )
+              else if (filtered.isEmpty && _searchQuery.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -311,7 +297,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'They’ll grow from here.',
+                        'Your words start here.',
                         style: context.type.title.copyWith(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -319,7 +305,7 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'As we talk, useful words and phrases find a home here. Their strength grows when you recall them over time.',
+                        'Add a video, link or document to collect words and phrases from your own material.',
                         style: context.type.body.copyWith(
                           color: colors.textSecondary,
                           fontSize: 14,
@@ -343,8 +329,6 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                   itemBuilder: (context, i) {
                     final item = filtered[i];
                     final article = item.article.trim();
-                    final bars = (i % 3) + 1; // 1, 2, or 3 bars
-
                     return Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -391,39 +375,10 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                                 ),
                               ),
 
-                              // 3 Recall Bars & Label matching Mural 05-words.png
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      for (int b = 0; b < 3; b++)
-                                        Container(
-                                          width: 14,
-                                          height: 4,
-                                          margin: const EdgeInsets.only(left: 3),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(2),
-                                            color: b < bars
-                                                ? TlPalette.brassGold
-                                                : colors.borderStrong.withValues(alpha: 0.3),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    bars == 1
-                                        ? '1 · Fragile'
-                                        : (bars == 2 ? '2 · Growing' : '3 · Steady'),
-                                    style: context.type.caption.copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textMuted,
-                                    ),
-                                  ),
-                                ],
+                              Icon(
+                                LucideIcons.chevronRight,
+                                size: 18,
+                                color: colors.textMuted,
                               ),
                             ],
                           ),
@@ -434,25 +389,6 @@ class _WordsScreenState extends ConsumerState<WordsScreen> {
                 ),
 
               const SizedBox(height: 24),
-
-              // Bottom footer legend matching Mural 05-words.png
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('1 · Fragile', style: context.type.caption.copyWith(color: colors.textMuted)),
-                  Text('2 · Growing', style: context.type.caption.copyWith(color: colors.textMuted)),
-                  Text('3 · Steady', style: context.type.caption.copyWith(color: colors.textMuted)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'The bars estimate spoken recall, not permanent mastery. Using a word with visible meanings counts as supported practice.',
-                style: context.type.caption.copyWith(
-                  color: colors.textMuted,
-                  fontSize: 11,
-                  height: 1.35,
-                ),
-              ),
             ],
           ),
         ),

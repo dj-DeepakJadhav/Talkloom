@@ -195,8 +195,11 @@ class TlFrostedGlass extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final bg = backgroundColor ??
-        (isDark ? TlPalette.frostedGlass : Colors.white.withValues(alpha: 0.85));
+    final bg =
+        backgroundColor ??
+        (isDark
+            ? TlPalette.frostedGlass
+            : Colors.white.withValues(alpha: 0.85));
 
     return ClipRRect(
       borderRadius: borderRadius,

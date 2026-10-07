@@ -90,7 +90,9 @@ class _TutorAvatarWidgetState extends State<TutorAvatarWidget>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: _getStateBorderColor(colors).withValues(alpha: 0.25),
+                        color: _getStateBorderColor(
+                          colors,
+                        ).withValues(alpha: 0.25),
                         blurRadius: 16,
                         spreadRadius: 2,
                       ),
@@ -117,7 +119,9 @@ class _TutorAvatarWidgetState extends State<TutorAvatarWidget>
             const SizedBox(height: TlSpace.xs),
             Text(
               widget.personaName,
-              style: context.type.bodyStrong.copyWith(color: colors.textPrimary),
+              style: context.type.bodyStrong.copyWith(
+                color: colors.textPrimary,
+              ),
             ),
             Text(
               widget.personaRole,
@@ -249,7 +253,10 @@ class _AvatarPainter extends CustomPainter {
     final hairPaint = Paint()..color = const Color(0xFF2C3E50);
     final hairPath = Path()
       ..addArc(
-        Rect.fromCircle(center: center.translate(0, -radius * 0.12), radius: radius * 0.73),
+        Rect.fromCircle(
+          center: center.translate(0, -radius * 0.12),
+          radius: radius * 0.73,
+        ),
         math.pi,
         math.pi,
       );
@@ -306,12 +313,21 @@ class _AvatarPainter extends CustomPainter {
 
       // Eye catchlight sparkles
       final catchLight = Paint()..color = Colors.white;
-      canvas.drawCircle(Offset(leftEyeX - 1.2, eyeY - 1.2 + lookOffsetY), 1.2, catchLight);
-      canvas.drawCircle(Offset(rightEyeX - 1.2, eyeY - 1.2 + lookOffsetY), 1.2, catchLight);
+      canvas.drawCircle(
+        Offset(leftEyeX - 1.2, eyeY - 1.2 + lookOffsetY),
+        1.2,
+        catchLight,
+      );
+      canvas.drawCircle(
+        Offset(rightEyeX - 1.2, eyeY - 1.2 + lookOffsetY),
+        1.2,
+        catchLight,
+      );
     }
 
     // Cheeks blushing
-    final blushPaint = Paint()..color = const Color(0xFFFF7675).withValues(alpha: 0.35);
+    final blushPaint = Paint()
+      ..color = const Color(0xFFFF7675).withValues(alpha: 0.35);
     canvas.drawCircle(Offset(leftEyeX - 5, eyeY + 10), 5.5, blushPaint);
     canvas.drawCircle(Offset(rightEyeX + 5, eyeY + 10), 5.5, blushPaint);
 
@@ -325,9 +341,15 @@ class _AvatarPainter extends CustomPainter {
     switch (state) {
       case TutorAvatarState.speaking:
         // Oscillating open mouth (viseme simulation)
-        double mouthOpen = 2.0 + 5.0 * (0.5 + 0.5 * math.sin(animationValue * 2 * math.pi * 5));
+        double mouthOpen =
+            2.0 +
+            5.0 * (0.5 + 0.5 * math.sin(animationValue * 2 * math.pi * 5));
         canvas.drawOval(
-          Rect.fromCenter(center: Offset(center.dx, mouthY), width: 14, height: mouthOpen),
+          Rect.fromCenter(
+            center: Offset(center.dx, mouthY),
+            width: 14,
+            height: mouthOpen,
+          ),
           mouthPaint,
         );
         break;
@@ -342,7 +364,11 @@ class _AvatarPainter extends CustomPainter {
       case TutorAvatarState.thinking:
         // Small focused mouth
         canvas.drawOval(
-          Rect.fromCenter(center: Offset(center.dx, mouthY), width: 6, height: 4),
+          Rect.fromCenter(
+            center: Offset(center.dx, mouthY),
+            width: 6,
+            height: 4,
+          ),
           mouthPaint,
         );
         break;

@@ -102,38 +102,10 @@
           } catch(e) {}
           this.isListening = false;
         }
-      },
-      
-      speakText: function(text, langCode) {
-        if (!window.speechSynthesis) {
-          console.warn("[talkloomVoice] SpeechSynthesis not supported.");
-          return;
-        }
-        try {
-          window.speechSynthesis.cancel(); // Stop any pending speech
-          // Strip any metadata brackets like [[new:...]] before speaking
-          var cleanText = text.replace(/\[\[new:([^:|\]]+)(?::([^\]]+))?\]\]/g, '$1');
-          var utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = langCode || 'de-DE';
-          utterance.rate = 0.95; // Slightly slower, clear pedagogical pace
-          
-          // Select best matching voice if available
-          var voices = window.speechSynthesis.getVoices();
-          var targetLang = (langCode || 'de-DE').toLowerCase();
-          var matchedVoice = voices.find(function(v) {
-            return v.lang && v.lang.toLowerCase().startsWith(targetLang.slice(0, 2));
-          });
-          if (matchedVoice) {
-            utterance.voice = matchedVoice;
-          }
-          
-          window.speechSynthesis.speak(utterance);
-        } catch (e) {
-          console.error('[talkloomVoice] Failed to speak text:', e);
-        }
       }
     };
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
+

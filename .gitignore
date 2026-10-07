@@ -118,6 +118,13 @@ talkloom/talkloom_server/bin/test_ai_direct.dart
 .mcp.json
 .vscode/mcp.json
 
+# Share the repository's Codex MCP configuration and Serverpod's official skills.
+!.codex/
+!.codex/config.toml
+!talkloom/.agents/
+!talkloom/.agents/skills/
+!talkloom/.agents/skills/**
+
 # ------------------------------------------------------------------------------
 # Cloned Upstream Reference Repositories
 # ------------------------------------------------------------------------------

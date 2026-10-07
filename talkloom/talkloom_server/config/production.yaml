@@ -1,4 +1,6 @@
 # This is the configuration file for your production environment.
+# Set public hosts, database connection and passwords through SERVERPOD_* env
+# vars in the deployment environment. The values below are placeholders only.
 # Typically, you will want to route the traffic through a load balancer
 # which adds SSL security through https. If you use Serverpod's standard
 # Terraform scripts to deploy your server, all you need to change in
@@ -49,7 +51,7 @@ redis:
   #user: # defaults to empty
   #requireSsl: true # defaults to false
 
-maxRequestSize: 524288 # The maximum size of requests allowed in bytes
+maxRequestSize: 16777216 # 16 MiB; individual media limits are enforced by ingestion.
 
 sessionLogs:
   consoleEnabled: false

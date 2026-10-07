@@ -1,15 +1,33 @@
-# talkloom_flutter
+# Talkloom Flutter app
 
-A new Flutter project with Serverpod.
+Mobile-first Talkloom client for Android and iOS, with a Web companion. The
+app's product contract is in [`../../Docs/talkloom_design_specification.md`](../../Docs/talkloom_design_specification.md).
 
-## Getting Started
+## Run
 
-This project is a starting point for a Flutter application that is using
-Serverpod.
+From this package directory, resolve workspace packages and launch through the
+Serverpod workspace:
 
-A great starting point for learning Serverpod is our documentation site at:
-[https://docs.serverpod.dev](https://docs.serverpod.dev).
+```sh
+flutter pub get
+cd ..
+serverpod start
+```
 
-To run the project, first make sure that the server is running, then do:
+For a physical Android device, pass a reachable backend address with
+`--dart-define=SERVER_URL=http://<computer-lan-ip>:8080/`. Production Web builds
+must be compiled with their deployed API URL; do not ship the localhost default.
 
-    flutter run
+## Verify
+
+```sh
+flutter analyze
+flutter test
+flutter build web --release
+flutter build apk --debug
+```
+
+Build iOS on macOS with Xcode using `flutter build ios --debug --no-codesign`.
+Camera and microphone behavior still requires permission testing on physical
+devices. See the active acceptance gates in
+[`../../Docs/fix_tickets_2026-10-06.md`](../../Docs/fix_tickets_2026-10-06.md).

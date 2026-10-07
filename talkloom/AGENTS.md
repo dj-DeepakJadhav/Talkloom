@@ -47,4 +47,83 @@ If the user asks you to test the app:
 
 The app is launched from `talkloom_flutter/lib/driver.dart`, which starts the Flutter driver extension with text entry emulation turned off so the app stays usable by hand. To let the driver type, set `enableTextEntryEmulation: true` there and `hot_restart` the app.
 
-IMPORTANT: After building the first version of the app, update this AGENTS.md file with information about the app we're building. KEEP the info about the MCP server and the checklist. Remove this paragraph.
+## Talkloom application
+
+Guest-first access is required. Create a unique persisted Serverpod anonymous
+session automatically; keep registration optional. Never restore the former
+mandatory-sign-in product flow or a shared guest identity. Account conversion
+must verify both identities and transfer learning data transactionally. See
+`../Docs/guest_access.md` for the implementation and recovery contract.
+
+German-first, user-content-driven language learning. The current shell exposes
+Today, My content and My German. Source detail opens speaking first, with optional
+practice; collection entries preserve original context. Follow
+`../Docs/talkloom_design_specification.md`, not historical Mural screenshot
+matching. Do not introduce sample lessons or simulated mastery into default flows.
+
+Client providers use selectedSourceProvider and activeLessonProvider to carry
+context. Runtime speech imports are conditional: Web speech uses the browser's
+installed voice; the current Android/iOS TTS stub is a no-op. The selected
+direction is self-hosted open-weight Qwen3-TTS behind Serverpod; this is a plan,
+not an implemented or verified integration. No new server models or migration
+were introduced by the editorial redesign. A separate Serverpod 4.0.3 auth-core
+schema-sync migration was added on 6 October 2026 after startup exposed drift in
+`serverpod_auth_core_profile_fk_1`; the generated migration is
+`talkloom/talkloom_server/migrations/20261006192906960-sync-auth-core-schema`.
+After Serverpod dependency upgrades, run `serverpod create-migration`, inspect
+the generated SQL, and apply it through the normal server startup before testing.
+
+Known backend audit findings (shared anonymous identity, fabricated import
+fallbacks and unvalidated evidence) remain separate work. Never claim the UI
+redesign resolves those defects.
+
+The release contract is mobile-first Android and iOS, with Web as a supported
+companion build. Check 360 px phone layouts, safe-area insets, keyboard scrolling,
+camera/file permissions, and native speech fallbacks before tuning wide layouts.
+
+## Serverpod 4 agent workflow (Windows)
+
+The repository is opened at its root, while the Dart workspace is `talkloom/`.
+Official Serverpod skills live in `talkloom/.agents/skills/`; refresh them from
+the Dart workspace root after changing Serverpod dependencies with
+`skills get --all --agent codex`. On machines where the `skills` executable is
+not on `PATH`, install it with `dart install skills` and add Dart's install bin
+directory to the user's `PATH`.
+
+The repository-root `.codex/config.toml` registers the Serverpod MCP server and
+Dart MCP server. Serverpod MCP operations depend on the dev environment started
+by the user; do not launch, stop, or restart it unless explicitly asked. After
+changing the MCP configuration, reload/reopen the Codex project so it discovers
+the servers. Agent skills provide domain guidance; MCP provides access to the
+live app's logs and development controls.
+
+`serverpod start` is the normal full-stack development command from
+`talkloom/`. It orchestrates the backend, local development database, configured
+Flutter app, code generation, and hot reload. In the Serverpod 4 terminal UI,
+`M` creates and applies a migration, `P` creates/applies a repair migration,
+and `R` hot-restarts. Use the CLI only for documented fallbacks or diagnostics;
+do not run `serverpod create .` on this existing application because that can
+overwrite server/config/authentication files and secrets. Model sources stay
+editable; generated client/server files are not. Inspect migration SQL and
+preserve data before applying schema changes. Run server tests with `dart test`
+from `talkloom/talkloom_server/` (the project test config uses embedded
+PostgreSQL).
+
+Serverpod does not document a notebook runtime or Jupyter notebook workflow, and
+this repository has no `.ipynb` notebooks. Use Dart tests and small, reviewable
+scripts for executable examples/evaluations; add notebooks only for a concrete
+analysis need, with sensitive user/media data excluded.
+
+App Studio and Serverpod Insights are separate tools. Serverpod's release post
+describes App Studio as a macOS beta with Windows coming soon. The current page
+shows “Windows Download” as plain text without an actual download link, so treat
+Windows App Studio as unavailable until a verifiable installer is published.
+The Serverpod CLI and regular Dart/Flutter workflow are the supported path for
+this Windows project. Do not add experimental offline sync to Talkloom without
+a product requirement and a fresh compatibility review.
+
+For link ingestion, Agent Reach is the preferred external capability layer:
+https://github.com/Panniantong/agent-reach. Use its health-checked upstream
+selection first in a worker adapter, then fall back to the normal platform
+resolver and AI path. Do not add Agent Reach as generated Serverpod code or
+claim the current Dart resolver has completed that integration.

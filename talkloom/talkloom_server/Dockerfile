@@ -1,13 +1,11 @@
-# Build from the project root with:
-# docker build -f talkloom_server/Dockerfile .
+# Build from the repository root:
+# docker build -f talkloom/talkloom_server/Dockerfile -t talkloom-server .
 
-# Build stage
 FROM dart:3.12.2 AS build
 
-# Create a minimal workspace that preserves locked server dependency versions.
 WORKDIR /app
-COPY pubspec.lock .
-COPY talkloom_server talkloom_server
+COPY talkloom/pubspec.lock ./pubspec.lock
+COPY talkloom/talkloom_server ./talkloom_server
 RUN printf '%s\n' \
   'name: _' \
   'environment:' \
@@ -17,42 +15,40 @@ RUN printf '%s\n' \
   > pubspec.yaml
 RUN dart pub get
 
-# Compile the server executable.
-WORKDIR /app/talkloom_server
-RUN dart build cli --target bin/main.dart --output build
-RUN mv build/bundle/bin/main build/bundle/bin/server
+# The YouTube caption adapter is Python-based; install its locked dependency
+# into the same Debian family used by the runtime image.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 python3-venv \
+  && python3 -m venv /opt/talkloom-python \
+  && /opt/talkloom-python/bin/pip install --no-cache-dir \
+      -r /app/talkloom_server/scripts/requirements.txt \
+  && rm -rf /var/lib/apt/lists/*
 
-# Add a fallback for the copy of possibly missing directories.
+WORKDIR /app/talkloom_server
+RUN dart build cli --target bin/main.dart --output build \
+  && mv build/bundle/bin/main build/bundle/bin/server
 RUN mkdir -p config web migrations
 
-# Final stage
-FROM alpine:latest
+FROM dart:3.12.2
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+ENV runmode=production \
+    serverid=default \
+    logging=normal \
+    role=monolith \
+    TALKLOOM_PYTHON_EXECUTABLE=/opt/talkloom-python/bin/python
 
-# Environment variables
-ENV runmode=production
-ENV serverid=default
-ENV logging=normal
-ENV role=monolith
-
-# Copy runtime dependencies
-COPY --from=build /runtime/ /
-
-# Copy compiled server executable and native libraries
 COPY --from=build /app/talkloom_server/build/bundle/ ./
+COPY --from=build /app/talkloom_server/config/ ./config/
+COPY --from=build /app/talkloom_server/web/ ./web/
+COPY --from=build /app/talkloom_server/migrations/ ./migrations/
+COPY --from=build /app/talkloom_server/scripts/ ./scripts/
+COPY --from=build /opt/talkloom-python/ /opt/talkloom-python/
+COPY --from=build /app/talkloom_server/lib/src/generated/protocol.yaml \
+  ./lib/src/generated/protocol.yaml
 
-# Copy configuration files and resources
-COPY --from=build /app/talkloom_server/config/ config/
-COPY --from=build /app/talkloom_server/web/ web/
-COPY --from=build /app/talkloom_server/migrations/ migrations/
-
-# This file is required to enable the endpoint log filter in Insights.
-COPY --from=build /app/talkloom_server/lib/src/generated/protocol.yaml lib/src/generated/protocol.yaml
-
-# Expose ports
-EXPOSE 8080
-EXPOSE 8081
-EXPOSE 8082
-
-# Define the entrypoint command
-ENTRYPOINT ./bin/server --mode=$runmode --server-id=$serverid --logging=$logging --role=$role
+EXPOSE 8080 8081 8082
+ENTRYPOINT ["/bin/sh", "-c", "exec ./bin/server --mode=\"$runmode\" --server-id=\"$serverid\" --logging=\"$logging\" --role=\"$role\""]

@@ -4,7 +4,8 @@ abstract class WebVoicePlatform {
   void init(void Function(String transcript)? onTranscriptReceived);
   bool startListening({String langCode = 'de-DE'});
   void stopListening();
-  void speak(String text, {String langCode = 'de-DE'});
+  bool get canSpeak;
+  bool speak(String text, {String langCode = 'de-DE'});
 }
 
 class WebVoiceService {
@@ -14,6 +15,10 @@ class WebVoiceService {
   void Function(String transcript)? onTranscriptReceived;
   bool _listening = false;
   bool get isListening => _listening;
+  bool get canSpeak => kIsWeb && (_platform?.canSpeak ?? false);
+  String get speechUnavailableReason => kIsWeb
+      ? 'Speech output is unavailable in this browser. Read the reply and continue.'
+      : 'Speech output is not available on this device yet. Read the reply and continue.';
 
   WebVoicePlatform? _platform;
 
@@ -42,8 +47,8 @@ class WebVoiceService {
     }
   }
 
-  void speak(String text, {String langCode = 'de-DE'}) {
-    if (!kIsWeb || _platform == null) return;
-    _platform!.speak(text, langCode: langCode);
+  bool speak(String text, {String langCode = 'de-DE'}) {
+    if (!kIsWeb || _platform == null) return false;
+    return _platform!.speak(text, langCode: langCode);
   }
 }

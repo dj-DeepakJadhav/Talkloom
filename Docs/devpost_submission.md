@@ -1,55 +1,46 @@
-# Talkloom: Devpost Submission & Technical Feedback Package
-**Target Hackathon:** Nebius x NVIDIA Global AI Hackathon  
-**Track:** Best Apps and Agents Track  
-**Special Category Prize:** Best Use of Tavily ($3,000)
+# BuilderBase submission draft — Talkloom
 
----
+**Event:** Build Something Real — Serverpod Hackathon
+**Status:** Draft only. Do not submit until the public deployment and complete
+fresh-user demo pass `LIVE-06` in [`fix_tickets_2026-10-06.md`](fix_tickets_2026-10-06.md).
 
-## 1. Project Title & Tagline
-- **Project Title:** Talkloom
-- **Elevator Pitch:** *Don't save it. Learn it. Speak it.* An audio-first linguistic precision instrument turning real-world content (contracts, podcasts, videos) into immediate conversational fluency with live pedagogical telemetry.
+## Tagline
 
----
+Turn the German content you save into something you can speak about.
 
-## 2. Devpost Story & Overview
+## What it does
 
-### 💡 Inspiration: The "Save Graveyard"
-Millions of language learners save dozens of articles, YouTube videos, and PDF documents every week intending to study them, only to never open them again. Meanwhile, standard apps (Duolingo, Babbel) trap learners in sterile, generic, gamified drills that fail when confronting real-world bureaucracy—such as negotiating a rental lease with a German landlord or disputing utility costs.
+Talkloom is a mobile-first Flutter app backed by Serverpod. A learner brings a
+German video, link, text or document; the app prepares source-linked vocabulary
+and grammar, then gives the learner a contextual way to practice speaking.
+The learner supplies the lesson material rather than receiving a generic
+preloaded curriculum.
 
-Talkloom bridges the gap between passive consumption and active speaking production by converting arbitrary authentic media into a structured Lesson DSL, priming syntax through 1/4/7 Ebbinghaus tactile mini-games, and engaging learners in spoken dialogue with hidden pedagogical missions.
+## Why Serverpod
 
----
+Serverpod connects the Flutter client to typed backend endpoints and persistent
+source, lesson and learning records. The final submission should show how the
+deployed Serverpod service enforces user ownership and carries the source
+through preparation and speaking practice. Remove any statement here that the
+final integration test does not demonstrate.
 
-## 3. How Talkloom Uses Nebius, NVIDIA & Tavily
+## Built with
 
-### A. Nebius Token Factory & NVIDIA Nemotron
-- **Nemotron 3 / 8B / 70B & Nano/Super:** Used for deep pedagogical decomposition. The compiler breaks down raw, complex prose into CEFR-graded lemmas, extracts contextual grammar schemas (e.g. *Wechselpräpositionen*, *Passiv*), and designs an adaptive conversational roleplay with hidden elicitation targets.
-- **Strict Lesson DSL Schema:** Output is guaranteed in structured JSON, mapping directly into Serverpod models for real-time frontend consumption.
+- Flutter for Android, iOS and Web.
+- Serverpod 4 and its generated Dart client.
+- The exact AI or speech provider used by the deployed build: **fill in only
+  after verifying the provider, model, configuration and fallback live**.
 
-### B. Tavily Context Grounding Engine
-- Ingested URLs and documents are passed to Tavily to extract real-time statutory and cultural ground truth (such as § 551 BGB German rental deposit caps or regional terminology).
-- Grounded facts are injected into the agent's context, ensuring realistic, culturally authentic conversations that prepare learners for actual bureaucratic encounters.
+## Demo and links
 
-### C. Serverpod 4 Full-Stack Framework
-- Serverpod 4 powers the backend, providing end-to-end typed communication with Flutter, database ORM on PostgreSQL, session management, and microservice orchestration.
+- Public app URL: **add after deployment; localhost is not a submission URL**.
+- Repository: confirm the actual public remote before submission.
+- Demo: record from [`demo_video_script.md`](demo_video_script.md) after the
+  fresh-account, ownership and device gates pass.
 
----
+## Claims to leave out until measured
 
-## 4. Technical Feedback for Nebius & NVIDIA
-
-1. **Structured Output Latency & Token Efficiency:**
-   - *Observation:* Nemotron provided exceptional reasoning for pedagogical difficulty calibration, achieving 99.4% adherence to our Lesson DSL schema without markdown hallucination.
-   - *Recommendation:* First-token latency on streaming structured JSON could be further optimized with pre-warmed token factory pipelines.
-
-2. **Serverless Worker Orchestration:**
-   - *Feedback:* Nebius Serverless Jobs provided cost-effective batch extraction for long YouTube transcripts and multi-page PDFs, keeping API endpoints responsive (<200ms initial response time).
-
-3. **NVIDIA Audio & Telemetry:**
-   - *Highlight:* Tracking cognitive load and speech latency allowed our Pilot HUD to dynamically modulate pedagogical scaffolding (switching from subtle hints to direct prompts when latency exceeded 3.5 seconds).
-
----
-
-## 5. Verification & Links
-- **GitHub Repository:** Public open-source repository at `https://github.com/talkloom/talkloom` (MIT License).
-- **Live Web Evaluation:** `http://localhost:3000`
-- **Demo Video Script:** See `Docs/demo_video_script.md`
+Do not claim formal CEFR grading, independent mastery, cognitive-load
+measurement, exact DSL adherence, low latency, cost reduction, Qwen3-TTS,
+Agent Reach, Nebius/NVIDIA/Tavily integration, public deployment, or a named
+license without corresponding implementation and reproducible evidence.
