@@ -1,0 +1,27 @@
+### A background lesson import owned by one learner. The import endpoint
+### creates the row and schedules a Future Call that does the slow work, so the
+### request returns immediately and progress is pushed over a stream.
+class: ImportJob
+table: import_jobs
+fields:
+  userId: String?, scope=serverOnly
+  ### url, text, document, image or ocr.
+  type: String
+  title: String
+  targetLanguage: String
+  supportLanguage: String
+  cefrLevel: String
+  url: String?
+  ### Pasted text or base64 media. Never sent back to clients.
+  rawContent: String?, scope=serverOnly
+  ### queued, fetching, transcript, compiling, validating, saved or failed.
+  stage: String, default='queued'
+  sourceId: int?
+  lessonId: int?
+  errorCode: String?
+  errorMessage: String?
+  createdAt: DateTime
+  updatedAt: DateTime
+indexes:
+  import_job_user_idx:
+    fields: userId, createdAt

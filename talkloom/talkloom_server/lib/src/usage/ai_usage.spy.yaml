@@ -1,0 +1,16 @@
+### Daily AI spend ledger, one row per learner per UTC day.
+### The quota gate reads and bumps these counters before any Meta call.
+class: AiUsage
+table: ai_usage
+fields:
+  userId: String
+  ### UTC midnight of the counted day.
+  day: DateTime
+  imports: int, default=0
+  conversationTurns: int, default=0
+  transcriptions: int, default=0
+  illustrations: int, default=0
+indexes:
+  ai_usage_user_day_idx:
+    fields: userId, day
+    unique: true

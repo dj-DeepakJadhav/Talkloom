@@ -1,0 +1,1320 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:serverpod/serverpod.dart' as _is;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _iacs;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _iais;
+import 'package:talkloom_server/src/generated/future_calls.dart' as _ib93q11w;
+import '../agent_reach/agent_reach_endpoint.dart' as _i23ilqye;
+import '../auth/anonymous_idp_endpoint.dart' as _in0zita6;
+import '../auth/email_idp_endpoint.dart' as _iuc1hd5t;
+import '../auth/jwt_refresh_endpoint.dart' as _inwq3ztq;
+import '../greetings/greeting_endpoint.dart' as _il624ik7;
+import '../learner/learner_state_endpoint.dart' as _i9uu499j;
+import '../lessons/illustration_endpoint.dart' as _iwjne1xy;
+import '../lessons/knowledge_endpoint.dart' as _i1u3gcej;
+import '../lessons/lesson_compiler_endpoint.dart' as _iszs4rjo;
+import '../lessons/pedagogical_endpoint.dart' as _ikctb4li;
+import '../lessons/video_endpoint.dart' as _ix4tfhh8;
+import '../sources/ingestion_endpoint.dart' as _i18xt97h;
+import '../speech/speech_endpoint.dart' as _inogyoe8;
+export 'future_calls.dart' show ServerpodFutureCallsGetter;
+
+class Endpoints extends _is.EndpointDispatch {
+  @override
+  void initializeEndpoints(_is.Server server) {
+    var endpoints = <String, _is.Endpoint>{
+      'agentReach': _i23ilqye.AgentReachEndpoint()
+        ..initialize(
+          server,
+          'agentReach',
+          null,
+        ),
+      'anonymousIdp': _in0zita6.AnonymousIdpEndpoint()
+        ..initialize(
+          server,
+          'anonymousIdp',
+          null,
+        ),
+      'emailIdp': _iuc1hd5t.EmailIdpEndpoint()
+        ..initialize(
+          server,
+          'emailIdp',
+          null,
+        ),
+      'jwtRefresh': _inwq3ztq.JwtRefreshEndpoint()
+        ..initialize(
+          server,
+          'jwtRefresh',
+          null,
+        ),
+      'greeting': _il624ik7.GreetingEndpoint()
+        ..initialize(
+          server,
+          'greeting',
+          null,
+        ),
+      'learnerState': _i9uu499j.LearnerStateEndpoint()
+        ..initialize(
+          server,
+          'learnerState',
+          null,
+        ),
+      'illustration': _iwjne1xy.IllustrationEndpoint()
+        ..initialize(
+          server,
+          'illustration',
+          null,
+        ),
+      'knowledge': _i1u3gcej.KnowledgeEndpoint()
+        ..initialize(
+          server,
+          'knowledge',
+          null,
+        ),
+      'lessonCompiler': _iszs4rjo.LessonCompilerEndpoint()
+        ..initialize(
+          server,
+          'lessonCompiler',
+          null,
+        ),
+      'pedagogical': _ikctb4li.PedagogicalEndpoint()
+        ..initialize(
+          server,
+          'pedagogical',
+          null,
+        ),
+      'video': _ix4tfhh8.VideoEndpoint()
+        ..initialize(
+          server,
+          'video',
+          null,
+        ),
+      'ingestion': _i18xt97h.IngestionEndpoint()
+        ..initialize(
+          server,
+          'ingestion',
+          null,
+        ),
+      'speech': _inogyoe8.SpeechEndpoint()
+        ..initialize(
+          server,
+          'speech',
+          null,
+        ),
+    };
+    connectors['agentReach'] = _is.EndpointConnector(
+      name: 'agentReach',
+      endpoint: endpoints['agentReach']!,
+      methodConnectors: {
+        'channels': _is.MethodConnector(
+          name: 'channels',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['agentReach'] as _i23ilqye.AgentReachEndpoint)
+                      .channels(session),
+        ),
+        'doctor': _is.MethodConnector(
+          name: 'doctor',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['agentReach'] as _i23ilqye.AgentReachEndpoint)
+                      .doctor(session),
+        ),
+        'runAction': _is.MethodConnector(
+          name: 'runAction',
+          params: {
+            'channel': _is.ParameterDescription(
+              name: 'channel',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'action': _is.ParameterDescription(
+              name: 'action',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'parametersJson': _is.ParameterDescription(
+              name: 'parametersJson',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'backend': _is.ParameterDescription(
+              name: 'backend',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'timeoutSeconds': _is.ParameterDescription(
+              name: 'timeoutSeconds',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['agentReach'] as _i23ilqye.AgentReachEndpoint)
+                      .runAction(
+                        session,
+                        params['channel'],
+                        params['action'],
+                        params['parametersJson'],
+                        backend: params['backend'],
+                        timeoutSeconds: params['timeoutSeconds'],
+                      ),
+        ),
+      },
+    );
+    connectors['anonymousIdp'] = _is.EndpointConnector(
+      name: 'anonymousIdp',
+      endpoint: endpoints['anonymousIdp']!,
+      methodConnectors: {
+        'isGuest': _is.MethodConnector(
+          name: 'isGuest',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .isGuest(session),
+        ),
+        'upgrade': _is.MethodConnector(
+          name: 'upgrade',
+          params: {
+            'accountToken': _is.ParameterDescription(
+              name: 'accountToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .upgrade(
+                        session,
+                        params['accountToken'],
+                      ),
+        ),
+        'login': _is.MethodConnector(
+          name: 'login',
+          params: {
+            'token': _is.ParameterDescription(
+              name: 'token',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['anonymousIdp'] as _in0zita6.AnonymousIdpEndpoint)
+                      .login(
+                        session,
+                        token: params['token'],
+                      ),
+        ),
+      },
+    );
+    connectors['emailIdp'] = _is.EndpointConnector(
+      name: 'emailIdp',
+      endpoint: endpoints['emailIdp']!,
+      methodConnectors: {
+        'login': _is.MethodConnector(
+          name: 'login',
+          params: {
+            'email': _is.ParameterDescription(
+              name: 'email',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'password': _is.ParameterDescription(
+              name: 'password',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint).login(
+                    session,
+                    email: params['email'],
+                    password: params['password'],
+                  ),
+        ),
+        'startRegistration': _is.MethodConnector(
+          name: 'startRegistration',
+          params: {
+            'email': _is.ParameterDescription(
+              name: 'email',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .startRegistration(
+                    session,
+                    email: params['email'],
+                  ),
+        ),
+        'verifyRegistrationCode': _is.MethodConnector(
+          name: 'verifyRegistrationCode',
+          params: {
+            'accountRequestId': _is.ParameterDescription(
+              name: 'accountRequestId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'verificationCode': _is.ParameterDescription(
+              name: 'verificationCode',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .verifyRegistrationCode(
+                    session,
+                    accountRequestId: params['accountRequestId'],
+                    verificationCode: params['verificationCode'],
+                  ),
+        ),
+        'finishRegistration': _is.MethodConnector(
+          name: 'finishRegistration',
+          params: {
+            'registrationToken': _is.ParameterDescription(
+              name: 'registrationToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'password': _is.ParameterDescription(
+              name: 'password',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .finishRegistration(
+                    session,
+                    registrationToken: params['registrationToken'],
+                    password: params['password'],
+                  ),
+        ),
+        'startPasswordReset': _is.MethodConnector(
+          name: 'startPasswordReset',
+          params: {
+            'email': _is.ParameterDescription(
+              name: 'email',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .startPasswordReset(
+                    session,
+                    email: params['email'],
+                  ),
+        ),
+        'verifyPasswordResetCode': _is.MethodConnector(
+          name: 'verifyPasswordResetCode',
+          params: {
+            'passwordResetRequestId': _is.ParameterDescription(
+              name: 'passwordResetRequestId',
+              type: _is.getType<_is.UuidValue>(),
+              nullable: false,
+            ),
+            'verificationCode': _is.ParameterDescription(
+              name: 'verificationCode',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .verifyPasswordResetCode(
+                    session,
+                    passwordResetRequestId: params['passwordResetRequestId'],
+                    verificationCode: params['verificationCode'],
+                  ),
+        ),
+        'finishPasswordReset': _is.MethodConnector(
+          name: 'finishPasswordReset',
+          params: {
+            'finishPasswordResetToken': _is.ParameterDescription(
+              name: 'finishPasswordResetToken',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'newPassword': _is.ParameterDescription(
+              name: 'newPassword',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .finishPasswordReset(
+                    session,
+                    finishPasswordResetToken:
+                        params['finishPasswordResetToken'],
+                    newPassword: params['newPassword'],
+                  ),
+        ),
+        'hasAccount': _is.MethodConnector(
+          name: 'hasAccount',
+          params: {},
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _iuc1hd5t.EmailIdpEndpoint)
+                  .hasAccount(session),
+        ),
+      },
+    );
+    connectors['jwtRefresh'] = _is.EndpointConnector(
+      name: 'jwtRefresh',
+      endpoint: endpoints['jwtRefresh']!,
+      methodConnectors: {
+        'refreshAccessToken': _is.MethodConnector(
+          name: 'refreshAccessToken',
+          params: {
+            'refreshToken': _is.ParameterDescription(
+              name: 'refreshToken',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['jwtRefresh'] as _inwq3ztq.JwtRefreshEndpoint)
+                      .refreshAccessToken(
+                        session,
+                        refreshToken: params['refreshToken'],
+                      ),
+        ),
+      },
+    );
+    connectors['greeting'] = _is.EndpointConnector(
+      name: 'greeting',
+      endpoint: endpoints['greeting']!,
+      methodConnectors: {
+        'hello': _is.MethodConnector(
+          name: 'hello',
+          params: {
+            'name': _is.ParameterDescription(
+              name: 'name',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['greeting'] as _il624ik7.GreetingEndpoint).hello(
+                    session,
+                    params['name'],
+                  ),
+        ),
+      },
+    );
+    connectors['learnerState'] = _is.EndpointConnector(
+      name: 'learnerState',
+      endpoint: endpoints['learnerState']!,
+      methodConnectors: {
+        'getLearnerState': _is.MethodConnector(
+          name: 'getLearnerState',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['learnerState'] as _i9uu499j.LearnerStateEndpoint)
+                      .getLearnerState(
+                        session,
+                        params['targetLanguage'],
+                      ),
+        ),
+        'recordEvidenceEvent': _is.MethodConnector(
+          name: 'recordEvidenceEvent',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'itemId': _is.ParameterDescription(
+              name: 'itemId',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'activityType': _is.ParameterDescription(
+              name: 'activityType',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'supportLevel': _is.ParameterDescription(
+              name: 'supportLevel',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'spontaneous': _is.ParameterDescription(
+              name: 'spontaneous',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+            'correct': _is.ParameterDescription(
+              name: 'correct',
+              type: _is.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['learnerState'] as _i9uu499j.LearnerStateEndpoint)
+                      .recordEvidenceEvent(
+                        session,
+                        targetLanguage: params['targetLanguage'],
+                        itemId: params['itemId'],
+                        activityType: params['activityType'],
+                        supportLevel: params['supportLevel'],
+                        spontaneous: params['spontaneous'],
+                        correct: params['correct'],
+                      ),
+        ),
+        'getEvidenceHistory': _is.MethodConnector(
+          name: 'getEvidenceHistory',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['learnerState'] as _i9uu499j.LearnerStateEndpoint)
+                      .getEvidenceHistory(
+                        session,
+                        params['targetLanguage'],
+                        limit: params['limit'],
+                      ),
+        ),
+      },
+    );
+    connectors['illustration'] = _is.EndpointConnector(
+      name: 'illustration',
+      endpoint: endpoints['illustration']!,
+      methodConnectors: {
+        'illustrate': _is.MethodConnector(
+          name: 'illustrate',
+          params: {
+            'subject': _is.ParameterDescription(
+              name: 'subject',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['illustration'] as _iwjne1xy.IllustrationEndpoint)
+                      .illustrate(
+                        session,
+                        params['subject'],
+                      ),
+        ),
+        'wordArt': _is.MethodConnector(
+          name: 'wordArt',
+          params: {
+            'lemma': _is.ParameterDescription(
+              name: 'lemma',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'meaning': _is.ParameterDescription(
+              name: 'meaning',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['illustration'] as _iwjne1xy.IllustrationEndpoint)
+                      .wordArt(
+                        session,
+                        params['lemma'],
+                        params['language'],
+                        meaning: params['meaning'],
+                      ),
+        ),
+      },
+    );
+    connectors['knowledge'] = _is.EndpointConnector(
+      name: 'knowledge',
+      endpoint: endpoints['knowledge']!,
+      methodConnectors: {
+        'getCombinedKnowledge': _is.MethodConnector(
+          name: 'getCombinedKnowledge',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'query': _is.ParameterDescription(
+              name: 'query',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'sort': _is.ParameterDescription(
+              name: 'sort',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['knowledge'] as _i1u3gcej.KnowledgeEndpoint)
+                  .getCombinedKnowledge(
+                    session,
+                    params['targetLanguage'],
+                    query: params['query'],
+                    sort: params['sort'],
+                    limit: params['limit'],
+                  ),
+        ),
+        'repairMyLessons': _is.MethodConnector(
+          name: 'repairMyLessons',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'maxRepairs': _is.ParameterDescription(
+              name: 'maxRepairs',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['knowledge'] as _i1u3gcej.KnowledgeEndpoint)
+                  .repairMyLessons(
+                    session,
+                    params['targetLanguage'],
+                    maxRepairs: params['maxRepairs'],
+                  ),
+        ),
+      },
+    );
+    connectors['lessonCompiler'] = _is.EndpointConnector(
+      name: 'lessonCompiler',
+      endpoint: endpoints['lessonCompiler']!,
+      methodConnectors: {
+        'compileLesson': _is.MethodConnector(
+          name: 'compileLesson',
+          params: {
+            'sourceTitle': _is.ParameterDescription(
+              name: 'sourceTitle',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'rawText': _is.ParameterDescription(
+              name: 'rawText',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'supportLanguage': _is.ParameterDescription(
+              name: 'supportLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'estimatedLevel': _is.ParameterDescription(
+              name: 'estimatedLevel',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['lessonCompiler']
+                          as _iszs4rjo.LessonCompilerEndpoint)
+                      .compileLesson(
+                        session,
+                        sourceTitle: params['sourceTitle'],
+                        rawText: params['rawText'],
+                        targetLanguage: params['targetLanguage'],
+                        supportLanguage: params['supportLanguage'],
+                        estimatedLevel: params['estimatedLevel'],
+                        sourceId: params['sourceId'],
+                      ),
+        ),
+      },
+    );
+    connectors['pedagogical'] = _is.EndpointConnector(
+      name: 'pedagogical',
+      endpoint: endpoints['pedagogical']!,
+      methodConnectors: {
+        'stepConversationTurn': _is.MethodConnector(
+          name: 'stepConversationTurn',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'role': _is.ParameterDescription(
+              name: 'role',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'situation': _is.ParameterDescription(
+              name: 'situation',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'hiddenTargets': _is.ParameterDescription(
+              name: 'hiddenTargets',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+            'previousTurns': _is.ParameterDescription(
+              name: 'previousTurns',
+              type: _is.getType<List<String>>(),
+              nullable: false,
+            ),
+            'learnerUtterance': _is.ParameterDescription(
+              name: 'learnerUtterance',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'responseLatencySec': _is.ParameterDescription(
+              name: 'responseLatencySec',
+              type: _is.getType<double>(),
+              nullable: false,
+            ),
+            'lessonId': _is.ParameterDescription(
+              name: 'lessonId',
+              type: _is.getType<int?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['pedagogical'] as _ikctb4li.PedagogicalEndpoint)
+                      .stepConversationTurn(
+                        session,
+                        params['targetLanguage'],
+                        params['role'],
+                        params['situation'],
+                        params['hiddenTargets'],
+                        params['previousTurns'],
+                        params['learnerUtterance'],
+                        params['responseLatencySec'],
+                        lessonId: params['lessonId'],
+                      ),
+        ),
+        'getLearnerState': _is.MethodConnector(
+          name: 'getLearnerState',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['pedagogical'] as _ikctb4li.PedagogicalEndpoint)
+                      .getLearnerState(
+                        session,
+                        params['targetLanguage'],
+                      ),
+        ),
+        'getEvidenceHistory': _is.MethodConnector(
+          name: 'getEvidenceHistory',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['pedagogical'] as _ikctb4li.PedagogicalEndpoint)
+                      .getEvidenceHistory(
+                        session,
+                        params['targetLanguage'],
+                        limit: params['limit'],
+                      ),
+        ),
+        'getWordEvidenceSummary': _is.MethodConnector(
+          name: 'getWordEvidenceSummary',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['pedagogical'] as _ikctb4li.PedagogicalEndpoint)
+                      .getWordEvidenceSummary(
+                        session,
+                        params['targetLanguage'],
+                      ),
+        ),
+        'getWordRecall': _is.MethodConnector(
+          name: 'getWordRecall',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['pedagogical'] as _ikctb4li.PedagogicalEndpoint)
+                      .getWordRecall(
+                        session,
+                        params['targetLanguage'],
+                      ),
+        ),
+      },
+    );
+    connectors['video'] = _is.EndpointConnector(
+      name: 'video',
+      endpoint: endpoints['video']!,
+      methodConnectors: {
+        'describeVideo': _is.MethodConnector(
+          name: 'describeVideo',
+          params: {
+            'videoUrl': _is.ParameterDescription(
+              name: 'videoUrl',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['video'] as _ix4tfhh8.VideoEndpoint).describeVideo(
+                    session,
+                    params['videoUrl'],
+                    params['language'],
+                  ),
+        ),
+      },
+    );
+    connectors['ingestion'] = _is.EndpointConnector(
+      name: 'ingestion',
+      endpoint: endpoints['ingestion']!,
+      methodConnectors: {
+        'processSourceAndCompile': _is.MethodConnector(
+          name: 'processSourceAndCompile',
+          params: {
+            'type': _is.ParameterDescription(
+              name: 'type',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'supportLanguage': _is.ParameterDescription(
+              name: 'supportLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'cefrLevel': _is.ParameterDescription(
+              name: 'cefrLevel',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'url': _is.ParameterDescription(
+              name: 'url',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'rawContent': _is.ParameterDescription(
+              name: 'rawContent',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .processSourceAndCompile(
+                    session,
+                    params['type'],
+                    params['title'],
+                    params['targetLanguage'],
+                    params['supportLanguage'],
+                    params['cefrLevel'],
+                    params['url'],
+                    params['rawContent'],
+                  ),
+        ),
+        'startImport': _is.MethodConnector(
+          name: 'startImport',
+          params: {
+            'type': _is.ParameterDescription(
+              name: 'type',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'title': _is.ParameterDescription(
+              name: 'title',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'supportLanguage': _is.ParameterDescription(
+              name: 'supportLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'cefrLevel': _is.ParameterDescription(
+              name: 'cefrLevel',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'url': _is.ParameterDescription(
+              name: 'url',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+            'rawContent': _is.ParameterDescription(
+              name: 'rawContent',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .startImport(
+                    session,
+                    params['type'],
+                    params['title'],
+                    params['targetLanguage'],
+                    params['supportLanguage'],
+                    params['cefrLevel'],
+                    params['url'],
+                    params['rawContent'],
+                  ),
+        ),
+        'getImportJob': _is.MethodConnector(
+          name: 'getImportJob',
+          params: {
+            'jobId': _is.ParameterDescription(
+              name: 'jobId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .getImportJob(
+                    session,
+                    params['jobId'],
+                  ),
+        ),
+        'listSources': _is.MethodConnector(
+          name: 'listSources',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _is.ParameterDescription(
+              name: 'offset',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .listSources(
+                    session,
+                    params['targetLanguage'],
+                    limit: params['limit'],
+                    offset: params['offset'],
+                  ),
+        ),
+        'getLessonBySourceId': _is.MethodConnector(
+          name: 'getLessonBySourceId',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .getLessonBySourceId(
+                    session,
+                    params['sourceId'],
+                  ),
+        ),
+        'refreshLesson': _is.MethodConnector(
+          name: 'refreshLesson',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .refreshLesson(
+                    session,
+                    params['sourceId'],
+                  ),
+        ),
+        'listLessons': _is.MethodConnector(
+          name: 'listLessons',
+          params: {
+            'targetLanguage': _is.ParameterDescription(
+              name: 'targetLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'limit': _is.ParameterDescription(
+              name: 'limit',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'offset': _is.ParameterDescription(
+              name: 'offset',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .listLessons(
+                    session,
+                    params['targetLanguage'],
+                    limit: params['limit'],
+                    offset: params['offset'],
+                  ),
+        ),
+        'removeSource': _is.MethodConnector(
+          name: 'removeSource',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .removeSource(
+                    session,
+                    params['sourceId'],
+                  ),
+        ),
+        'restoreSource': _is.MethodConnector(
+          name: 'restoreSource',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .restoreSource(
+                    session,
+                    params['sourceId'],
+                  ),
+        ),
+        'watchImportJob': _is.MethodStreamConnector(
+          name: 'watchImportJob',
+          params: {
+            'jobId': _is.ParameterDescription(
+              name: 'jobId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) => (endpoints['ingestion'] as _i18xt97h.IngestionEndpoint)
+                  .watchImportJob(
+                    session,
+                    params['jobId'],
+                  ),
+        ),
+      },
+    );
+    connectors['speech'] = _is.EndpointConnector(
+      name: 'speech',
+      endpoint: endpoints['speech']!,
+      methodConnectors: {
+        'transcribe': _is.MethodConnector(
+          name: 'transcribe',
+          params: {
+            'base64Audio': _is.ParameterDescription(
+              name: 'base64Audio',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'vocabulary': _is.ParameterDescription(
+              name: 'vocabulary',
+              type: _is.getType<List<String>?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['speech'] as _inogyoe8.SpeechEndpoint).transcribe(
+                    session,
+                    params['base64Audio'],
+                    params['language'],
+                    vocabulary: params['vocabulary'],
+                  ),
+        ),
+        'synthesize': _is.MethodConnector(
+          name: 'synthesize',
+          params: {
+            'text': _is.ParameterDescription(
+              name: 'text',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'language': _is.ParameterDescription(
+              name: 'language',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'voice': _is.ParameterDescription(
+              name: 'voice',
+              type: _is.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['speech'] as _inogyoe8.SpeechEndpoint).synthesize(
+                    session,
+                    params['text'],
+                    params['language'],
+                    voice: params['voice'],
+                  ),
+        ),
+      },
+    );
+    modules['serverpod_auth_idp'] = _iais.Endpoints()
+      ..initializeEndpoints(server);
+    modules['serverpod_auth_core'] = _iacs.Endpoints()
+      ..initializeEndpoints(server);
+  }
+
+  @override
+  _is.FutureCallDispatch? get futureCalls {
+    return _ib93q11w.FutureCalls();
+  }
+}

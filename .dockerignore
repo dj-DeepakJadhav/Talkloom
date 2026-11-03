@@ -1,0 +1,9 @@
+.git
+**/.dart_tool
+**/.serverpod
+**/.venv
+**/build
+**/ephemeral
+**/config/passwords.yaml
+**/*.jks
+**/*.keystore

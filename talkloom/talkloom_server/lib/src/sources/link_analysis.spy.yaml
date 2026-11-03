@@ -1,0 +1,40 @@
+### The shared, learner-independent result of analysing one public link for one
+### language pair and level. Any learner who imports the same link reuses this
+### row instead of fetching and compiling again. Server-side only: never
+### returned to clients.
+class: LinkAnalysis
+table: link_analyses
+fields:
+  ### Output of the URL normaliser; the cache key together with the languages.
+  normalizedUrl: String
+  ### youtube, instagram, tiktok, reddit, x, facebook or web.
+  platform: String
+  ### Channel, account, subreddit or site host, as displayed.
+  creator: String?
+  ### Lower-cased creator for grouping and lookups.
+  creatorKey: String?
+  title: String
+  targetLanguage: String
+  supportLanguage: String
+  cefrLevel: String
+  transcript: String
+  ### SHA-256 of the whitespace-normalised transcript.
+  contentHash: String
+  objectives: List<String>
+  vocabulary: String
+  grammar: String
+  activities: String
+  conversationPlan: String
+  hitCount: int, default=0
+  createdAt: DateTime
+  lastUsedAt: DateTime
+  ### Null means the analysis does not expire.
+  expiresAt: DateTime?
+indexes:
+  link_analysis_key_idx:
+    fields: normalizedUrl, targetLanguage, supportLanguage, cefrLevel
+    unique: true
+  link_analysis_url_idx:
+    fields: normalizedUrl, targetLanguage
+  link_analysis_category_idx:
+    fields: platform, creatorKey

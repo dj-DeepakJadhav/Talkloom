@@ -1,0 +1,22 @@
+### One house-style illustration per vocabulary lemma, shared across all
+### learners and languages. The style is locked server-side, so the same
+### word always renders the same picture everywhere. Server-side only:
+### clients receive bytes, never rows.
+class: VocabArtwork
+table: vocab_artworks
+fields:
+  ### Lower-cased lemma; the cross-language dedupe key.
+  lemmaKey: String
+  ### Language the word was requested in (informational; art is shared).
+  language: String
+  ### Bumps when the house style changes; old rows are ignored, never migrated.
+  styleVersion: int, default=1
+  mimeType: String
+  artwork: ByteData
+  hitCount: int, default=0
+  createdAt: DateTime
+  lastUsedAt: DateTime
+indexes:
+  artwork_lemma_style_idx:
+    fields: lemmaKey, styleVersion
+    unique: true

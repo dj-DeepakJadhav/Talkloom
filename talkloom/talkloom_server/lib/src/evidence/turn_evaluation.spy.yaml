@@ -1,0 +1,26 @@
+### Independent semantic evaluation of one learner speaking turn against the
+### source-linked targets of a lesson the learner owns. Written only by the
+### server; the tutor reply is never used as evidence.
+class: TurnEvaluation
+table: turn_evaluations
+fields:
+  userId: String?, scope=serverOnly
+  targetLanguage: String
+  lessonId: int
+  ### The learner utterance that was judged.
+  learnerUtterance: String?, scope=serverOnly
+  ### evaluated, evaluator_unavailable or assisted.
+  status: String
+  ### Evaluator provider and model, null when no evaluator call was made.
+  provider: String?
+  model: String?
+  ### Safe reason when status is not evaluated (no_provider_key,
+  ### provider_error, malformed_output, tutor_assisted).
+  reason: String?
+  ### JSON list of per-target judgements:
+  ### {itemId, kind, used, correct, inContext, spontaneous, eligible}.
+  results: String
+  createdAt: DateTime
+indexes:
+  turn_evaluation_user_lang_idx:
+    fields: userId, targetLanguage, createdAt

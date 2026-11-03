@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Speech bubble: warm paper body plus tail, espresso shows through. -->
+    <path
+        android:fillColor="#FFFCF5"
+        android:pathData="M32,22 h44 a14,14 0 0 1 14,14 v26 a14,14 0 0 1 -14,14 H44 L32,92 L36,76 H32 A14,14 0 0 1 18,62 V36 A14,14 0 0 1 32,22 Z" />
+    <!-- Conversation dots: sage, sage, apricot. -->
+    <path
+        android:fillColor="#2A9D6F"
+        android:pathData="M40,49 m-6,0 a6,6 0 1 1 12,0 a6,6 0 1 1 -12,0" />
+    <path
+        android:fillColor="#2A9D6F"
+        android:pathData="M54,49 m-6,0 a6,6 0 1 1 12,0 a6,6 0 1 1 -12,0" />
+    <path
+        android:fillColor="#F39C38"
+        android:pathData="M68,49 m-6,0 a6,6 0 1 1 12,0 a6,6 0 1 1 -12,0" />
+</vector>

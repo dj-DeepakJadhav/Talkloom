@@ -1,0 +1,12 @@
+### One progress update for an [ImportJob], pushed to its owner's stream.
+class: ImportJobProgress
+fields:
+  jobId: int
+  ### queued, fetching, transcript, compiling, validating, saved or failed.
+  stage: String
+  sourceId: int?
+  lessonId: int?
+  ### Safe ImportException-style code when [stage] is failed.
+  errorCode: String?
+  ### Learner-facing explanation when [stage] is failed.
+  errorMessage: String?

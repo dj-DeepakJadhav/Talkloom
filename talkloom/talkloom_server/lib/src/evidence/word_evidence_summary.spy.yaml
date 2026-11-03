@@ -1,0 +1,18 @@
+### Owner-scoped, server-verified evidence summary for one lesson target.
+class: WordEvidenceSummary
+fields:
+  itemId: String
+  ### vocabulary or grammar.
+  kind: String
+  ### Number of separate evaluated turns with eligible correct, in-context,
+  ### spontaneous use.
+  eligibleCorrectTurns: int
+  ### Number of evaluated turns where the target was used incorrectly.
+  incorrectTurns: int
+  ### Evaluated turns with correct use that was prompted or tutor-modelled,
+  ### so it does not count toward mastery.
+  ineligibleTurns: int
+  ### Turns required for active mastery (see masteryTurnThreshold).
+  threshold: int
+  mastered: bool
+  lastEvidenceAt: DateTime?

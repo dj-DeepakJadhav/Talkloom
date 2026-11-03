@@ -1,0 +1,55 @@
+agentReach:
+  - channels:
+  - doctor:
+  - runAction:
+anonymousIdp:
+  - isGuest:
+  - upgrade:
+  - login:
+emailIdp:
+  - login:
+  - startRegistration:
+  - verifyRegistrationCode:
+  - finishRegistration:
+  - startPasswordReset:
+  - verifyPasswordResetCode:
+  - finishPasswordReset:
+  - hasAccount:
+jwtRefresh:
+  - refreshAccessToken:
+greeting:
+  - hello:
+learnerState:
+  - getLearnerState:
+  - recordEvidenceEvent:
+  - getEvidenceHistory:
+illustration:
+  - illustrate:
+  - wordArt:
+knowledge:
+  - getCombinedKnowledge:
+  - repairMyLessons:
+lessonCompiler:
+  - compileLesson:
+pedagogical:
+  - stepConversationTurn:
+  - getLearnerState:
+  - getEvidenceHistory:
+  - getWordEvidenceSummary:
+  - getWordRecall:
+video:
+  - describeVideo:
+ingestion:
+  - processSourceAndCompile:
+  - startImport:
+  - getImportJob:
+  - watchImportJob:
+  - listSources:
+  - getLessonBySourceId:
+  - refreshLesson:
+  - listLessons:
+  - removeSource:
+  - restoreSource:
+speech:
+  - transcribe:
+  - synthesize:

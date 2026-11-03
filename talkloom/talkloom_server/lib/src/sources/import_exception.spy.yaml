@@ -1,0 +1,11 @@
+### Raised when a source cannot be imported for a reason the learner can act
+### on. Serverpod delivers serializable exceptions to the client intact, unlike
+### ordinary errors, which are masked as an internal server error.
+exception: ImportException
+
+fields:
+  ### Machine-readable reason: blocked, not_found, unavailable, no_text,
+  ### timeout, unreachable, unsupported_link or unreadable.
+  code: String
+  ### Plain-language explanation that is safe to show a learner.
+  message: String

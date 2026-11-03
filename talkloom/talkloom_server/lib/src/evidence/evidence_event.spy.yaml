@@ -1,0 +1,11 @@
+﻿class: EvidenceEvent
+table: evidence_events
+fields:
+  userId: String
+  targetLanguage: String
+  itemId: String
+  activityType: String
+  supportLevel: String
+  spontaneous: bool
+  correct: bool
+  timestamp: DateTime

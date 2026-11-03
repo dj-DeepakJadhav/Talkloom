@@ -1,0 +1,22 @@
+class: Source
+table: sources
+fields:
+  userId: String
+  type: String
+  url: String?
+  rawText: String
+  title: String
+  targetLanguage: String
+  cefrLevel: String
+  createdAt: DateTime
+  isArchived: bool, default=false
+  ### youtube, instagram, tiktok, reddit, x, facebook or web; null for pasted
+  ### text and files.
+  platform: String?
+  ### Channel, account, subreddit or site host, as displayed.
+  creator: String?
+indexes:
+  source_user_lang_idx:
+    fields: userId, targetLanguage, isArchived
+  source_url_lang_idx:
+    fields: url, targetLanguage

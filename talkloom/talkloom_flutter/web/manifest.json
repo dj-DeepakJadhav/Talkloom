@@ -1,0 +1,35 @@
+{
+    "name": "Talkloom",
+    "short_name": "Talkloom",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#FAF6EF",
+    "theme_color": "#B94732",
+    "description": "Turn the German content you save into something you can speak about.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
