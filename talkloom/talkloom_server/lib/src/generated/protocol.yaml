@@ -50,6 +50,8 @@ ingestion:
   - listLessons:
   - removeSource:
   - restoreSource:
+sourceReading:
+  - readSource:
 speech:
   - transcribe:
   - synthesize:

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:talkloom_client/talkloom_client.dart';
 import '../core/failure.dart';
 import '../domain/learning_session.dart';
+import '../domain/source_reading.dart';
 
 /// Result of one conversation turn, decoded from the agent's telemetry.
 ///
@@ -78,6 +79,25 @@ class LessonRepository {
   static const _reconnectDelay = Duration(seconds: 2);
   static const _maxReconnects = 5;
   static const _turnTimeout = Duration(seconds: 45);
+
+  Stream<SourceReadingBatch> readSource({
+    required int sourceId,
+    required String supportLanguage,
+    required String mode,
+  }) async* {
+    try {
+      await for (final raw
+          in _client.sourceReading
+              .readSource(sourceId, supportLanguage, mode)
+              .timeout(const Duration(seconds: 120))) {
+        yield SourceReadingBatch.fromJson(
+          jsonDecode(raw) as Map<String, dynamic>,
+        );
+      }
+    } catch (error) {
+      throw Failure.from(error);
+    }
+  }
 
   Future<T> _guard<T>(
     Future<T> Function() action, {

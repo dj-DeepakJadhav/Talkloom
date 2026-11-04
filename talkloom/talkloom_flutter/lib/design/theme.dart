@@ -30,6 +30,38 @@ ThemeData buildTalkloomTheme(Brightness brightness) {
     scaffoldBackgroundColor: colors.canvas,
     splashFactory: NoSplash.splashFactory,
     highlightColor: Colors.transparent,
+    iconTheme: IconThemeData(size: 22, color: colors.textPrimary),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        foregroundColor: colors.textPrimary,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        textStyle: type.label,
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: colors.canvas,
+      surfaceTintColor: Colors.transparent,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      elevation: 0,
+      height: 72,
+      surfaceTintColor: Colors.transparent,
+      labelTextStyle: WidgetStatePropertyAll(
+        type.caption.copyWith(color: colors.textPrimary),
+      ),
+      iconTheme: WidgetStatePropertyAll(
+        IconThemeData(size: 22, color: colors.textPrimary),
+      ),
+    ),
     colorScheme: ColorScheme.fromSeed(
       seedColor: colors.primary,
       brightness: brightness,
@@ -51,13 +83,13 @@ ThemeData buildTalkloomTheme(Brightness brightness) {
               states.contains(WidgetState.disabled) ||
                   states.contains(WidgetState.pressed)
               ? 0
-              : 3,
+              : 0,
         ),
         shadowColor: WidgetStatePropertyAll(
           colors.textPrimary.withValues(alpha: .3),
         ),
         shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          RoundedRectangleBorder(borderRadius: TlRadius.controlRadius),
         ),
         animationDuration: const Duration(milliseconds: 140),
       ),

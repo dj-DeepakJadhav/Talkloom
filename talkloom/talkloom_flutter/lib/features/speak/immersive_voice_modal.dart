@@ -97,8 +97,7 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
         );
         _tutorTurns.add(_messages.first.text);
       });
-      // Start listening automatically
-      _startListening();
+      // Listening begins only after the learner taps the microphone.
     });
   }
 
@@ -258,7 +257,7 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
           maxWidth: TlSpace.maxContentWidth,
         ),
         child: Container(
-          height: MediaQuery.sizeOf(context).height * 0.88,
+          height: MediaQuery.sizeOf(context).height * 0.96,
           decoration: BoxDecoration(
             color: const Color(0xFF0D0F14).withValues(alpha: 0.98),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -382,34 +381,40 @@ class _ImmersiveVoiceModalState extends ConsumerState<ImmersiveVoiceModal> {
                   ),
                 ),
 
-                // Live Speech Status Subtitle
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 6,
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Text(
-                      statusText,
-                      key: ValueKey(statusText),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.type.caption.copyWith(
-                        color: _isRecording ? colors.primary : colors.textMuted,
-                        fontWeight: _isRecording
-                            ? FontWeight.w600
-                            : FontWeight.w500,
+                // Short landscape viewports keep the composer reachable.
+                if (MediaQuery.sizeOf(context).height > 400)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 6,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        statusText,
+                        key: ValueKey(statusText),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.type.caption.copyWith(
+                          color: _isRecording
+                              ? colors.primary
+                              : colors.textMuted,
+                          fontWeight: _isRecording
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
                 // Bottom Center Pulsating Voice Orb
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14, top: 2),
                   child: TlPressable(
+                    semanticLabel: _isRecording
+                        ? 'Stop and send'
+                        : 'Start speaking',
                     onTap: () {
                       if (_isRecording || _liveTranscript.trim().isNotEmpty) {
                         _stopAndSend(plan);

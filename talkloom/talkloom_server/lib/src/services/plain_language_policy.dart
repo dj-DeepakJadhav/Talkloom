@@ -36,3 +36,23 @@ Before returning the result, check the generated prose for filler and difficult
 wording. Simplify it while preserving every supported claim and the JSON schema.
 Return only the requested result, without an editing report.
 ''';
+
+// Emoji, pictographs, dingbats, flags, joiners and variation selectors.
+// Letters (including umlauts and ß), digits and ordinary punctuation are not
+// in these ranges.
+final _decorativeSymbols = RegExp(
+  '[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}'
+  '\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]',
+  unicode: true,
+);
+
+/// Removes emoji and decorative symbols from generated prose. Returns the
+/// input unchanged when it has none, so plain text is never reformatted.
+String stripDecorativeSymbols(String text) {
+  if (!_decorativeSymbols.hasMatch(text)) return text;
+  return text
+      .replaceAll(_decorativeSymbols, '')
+      .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
+      .replaceAll(RegExp(r'[ \t]+([.,!?;:])'), r'$1')
+      .trim();
+}

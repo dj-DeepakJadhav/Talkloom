@@ -80,8 +80,12 @@ class ProfileScreen extends ConsumerWidget {
             _ProfileRow(
               icon: context.isDarkMode ? AppIcons.moon : AppIcons.sun,
               title: 'Appearance',
-              value: context.isDarkMode ? 'Dark' : 'Light',
-              onTap: () => ref.read(appThemeProvider.notifier).toggle(),
+              value: switch (ref.watch(appThemeProvider)) {
+                ThemeMode.system => 'System',
+                ThemeMode.light => 'Light',
+                ThemeMode.dark => 'Dark',
+              },
+              onTap: () => _chooseAppearance(context, ref),
             ),
             _ProfileRow(
               icon: AppIcons.eye,
@@ -101,6 +105,60 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _chooseAppearance(BuildContext context, WidgetRef ref) async {
+    final selected = await showModalBottomSheet<ThemeMode>(
+      context: context,
+      useSafeArea: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Appearance', style: context.type.headline),
+                ),
+                for (final mode in [
+                  ThemeMode.system,
+                  ThemeMode.light,
+                  ThemeMode.dark,
+                ])
+                  ListTile(
+                    leading: Icon(
+                      mode == ThemeMode.dark
+                          ? AppIcons.moon
+                          : mode == ThemeMode.light
+                          ? AppIcons.sun
+                          : AppIcons.slidersHorizontal,
+                    ),
+                    title: Text(switch (mode) {
+                      ThemeMode.system => 'System',
+                      ThemeMode.light => 'Light',
+                      ThemeMode.dark => 'Dark',
+                    }),
+                    subtitle: mode == ThemeMode.system
+                        ? const Text('Follow your device’s appearance')
+                        : null,
+                    trailing: ref.read(appThemeProvider) == mode
+                        ? const Icon(AppIcons.check)
+                        : null,
+                    selected: ref.read(appThemeProvider) == mode,
+                    onTap: () => Navigator.pop(context, mode),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (selected != null && context.mounted) {
+      await ref.read(appThemeProvider.notifier).setMode(selected);
+    }
   }
 
   Future<void> _chooseExplanationLanguage(

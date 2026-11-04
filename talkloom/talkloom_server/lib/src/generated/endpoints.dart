@@ -28,6 +28,7 @@ import '../lessons/lesson_compiler_endpoint.dart' as _iszs4rjo;
 import '../lessons/pedagogical_endpoint.dart' as _ikctb4li;
 import '../lessons/video_endpoint.dart' as _ix4tfhh8;
 import '../sources/ingestion_endpoint.dart' as _i18xt97h;
+import '../sources/source_reading_endpoint.dart' as _ifbuqe5j;
 import '../speech/speech_endpoint.dart' as _inogyoe8;
 export 'future_calls.dart' show ServerpodFutureCallsGetter;
 
@@ -105,6 +106,12 @@ class Endpoints extends _is.EndpointDispatch {
         ..initialize(
           server,
           'ingestion',
+          null,
+        ),
+      'sourceReading': _ifbuqe5j.SourceReadingEndpoint()
+        ..initialize(
+          server,
+          'sourceReading',
           null,
         ),
       'speech': _inogyoe8.SpeechEndpoint()
@@ -1236,6 +1243,48 @@ class Endpoints extends _is.EndpointDispatch {
                     session,
                     params['jobId'],
                   ),
+        ),
+      },
+    );
+    connectors['sourceReading'] = _is.EndpointConnector(
+      name: 'sourceReading',
+      endpoint: endpoints['sourceReading']!,
+      methodConnectors: {
+        'readSource': _is.MethodStreamConnector(
+          name: 'readSource',
+          params: {
+            'sourceId': _is.ParameterDescription(
+              name: 'sourceId',
+              type: _is.getType<int>(),
+              nullable: false,
+            ),
+            'supportLanguage': _is.ParameterDescription(
+              name: 'supportLanguage',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+            'mode': _is.ParameterDescription(
+              name: 'mode',
+              type: _is.getType<String>(),
+              nullable: false,
+            ),
+          },
+          streamParams: {},
+          returnType: _is.MethodStreamReturnType.streamType,
+          call:
+              (
+                _is.Session session,
+                Map<String, dynamic> params,
+                Map<String, Stream> streamParams,
+              ) =>
+                  (endpoints['sourceReading']
+                          as _ifbuqe5j.SourceReadingEndpoint)
+                      .readSource(
+                        session,
+                        params['sourceId'],
+                        params['supportLanguage'],
+                        params['mode'],
+                      ),
         ),
       },
     );

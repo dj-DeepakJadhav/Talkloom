@@ -34,6 +34,7 @@ import 'sources/import_job.dart' as _i5fsgrng;
 import 'sources/import_job_progress.dart' as _ibcc22em;
 import 'sources/link_analysis.dart' as _i9zsyima;
 import 'sources/source.dart' as _i78k1pe6;
+import 'sources/source_translation_chunk.dart' as _ii8jufog;
 import 'usage/ai_usage.dart' as _iaxrn8hs;
 export 'evidence/evidence_event.dart';
 export 'evidence/turn_evaluation.dart';
@@ -47,6 +48,7 @@ export 'sources/import_job.dart';
 export 'sources/import_job_progress.dart';
 export 'sources/link_analysis.dart';
 export 'sources/source.dart';
+export 'sources/source_translation_chunk.dart';
 export 'usage/ai_usage.dart';
 export 'client.dart';
 
@@ -120,6 +122,9 @@ class Protocol extends _isc.SerializationManager {
     if (t == _i78k1pe6.Source) {
       return _i78k1pe6.Source.fromJson(data) as T;
     }
+    if (t == _ii8jufog.SourceTranslationChunk) {
+      return _ii8jufog.SourceTranslationChunk.fromJson(data) as T;
+    }
     if (t == _iaxrn8hs.AiUsage) {
       return _iaxrn8hs.AiUsage.fromJson(data) as T;
     }
@@ -165,6 +170,12 @@ class Protocol extends _isc.SerializationManager {
     }
     if (t == _isc.getType<_i78k1pe6.Source?>()) {
       return (data != null ? _i78k1pe6.Source.fromJson(data) : null) as T;
+    }
+    if (t == _isc.getType<_ii8jufog.SourceTranslationChunk?>()) {
+      return (data != null
+              ? _ii8jufog.SourceTranslationChunk.fromJson(data)
+              : null)
+          as T;
     }
     if (t == _isc.getType<_iaxrn8hs.AiUsage?>()) {
       return (data != null ? _iaxrn8hs.AiUsage.fromJson(data) : null) as T;
@@ -228,6 +239,7 @@ class Protocol extends _isc.SerializationManager {
       _ibcc22em.ImportJobProgress => 'ImportJobProgress',
       _i9zsyima.LinkAnalysis => 'LinkAnalysis',
       _i78k1pe6.Source => 'Source',
+      _ii8jufog.SourceTranslationChunk => 'SourceTranslationChunk',
       _iaxrn8hs.AiUsage => 'AiUsage',
       _ => null,
     };
@@ -267,6 +279,8 @@ class Protocol extends _isc.SerializationManager {
         return 'LinkAnalysis';
       case _i78k1pe6.Source():
         return 'Source';
+      case _ii8jufog.SourceTranslationChunk():
+        return 'SourceTranslationChunk';
       case _iaxrn8hs.AiUsage():
         return 'AiUsage';
     }
@@ -326,6 +340,9 @@ class Protocol extends _isc.SerializationManager {
     }
     if (dataClassName == 'Source') {
       return deserialize<_i78k1pe6.Source>(data['data']);
+    }
+    if (dataClassName == 'SourceTranslationChunk') {
+      return deserialize<_ii8jufog.SourceTranslationChunk>(data['data']);
     }
     if (dataClassName == 'AiUsage') {
       return deserialize<_iaxrn8hs.AiUsage>(data['data']);

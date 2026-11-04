@@ -32,13 +32,6 @@ class TlCard extends StatelessWidget {
         color: colors.surface,
         borderRadius: TlRadius.cardRadius,
         border: Border.all(color: accent ?? colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            offset: const Offset(0, 6),
-            blurRadius: 18,
-          ),
-        ],
       ),
       child: child,
     );
@@ -177,7 +170,7 @@ class _TlPressableState extends State<TlPressable> {
                         : _isPressed
                         ? TlMotion.instant
                         : TlMotion.medium,
-                    curve: _isPressed ? Curves.easeOut : Curves.easeOutBack,
+                    curve: TlMotion.standard,
                     child: widget.child,
                   ),
                 ),

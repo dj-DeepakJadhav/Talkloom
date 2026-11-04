@@ -149,7 +149,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final registered = _isSignedIn && _isGuest == false;
     final registration =
         controller?.currentScreen == EmailFlowScreen.startRegistration;
-    final narrow = MediaQuery.sizeOf(context).width < 360;
+    final narrow = MediaQuery.sizeOf(context).width <= 390;
     final primaryScreens =
         registration || controller?.currentScreen == EmailFlowScreen.login;
     return Scaffold(

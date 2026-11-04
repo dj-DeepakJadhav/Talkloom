@@ -161,7 +161,18 @@ class _TlSkeletonState extends State<TlSkeleton>
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.stop();
+      _controller.value = 1;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
@@ -180,6 +191,7 @@ class _TlSkeletonState extends State<TlSkeleton>
         borderRadius: BorderRadius.circular(widget.radius),
       ),
     );
+    if (MediaQuery.disableAnimationsOf(context)) return bar;
     if (widget.shimmer) {
       // Sweep highlight for content rows; gradient-only, no blur/shadow.
       return Shimmer.fromColors(
@@ -208,6 +220,7 @@ class TlEntrance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: TlMotion.medium + TlMotion.stagger * index,

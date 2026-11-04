@@ -28,7 +28,7 @@ class TalkloomNavigationBar extends StatelessWidget {
       ),
       NavigationDestination(
         icon: _NavGlyph(
-          icon: selectedIndex == 1 ? AppIcons.libraryBig : AppIcons.library,
+          icon: AppIcons.library,
           selected: selectedIndex == 1,
         ),
         label: 'My learning',
@@ -52,11 +52,11 @@ class _NavGlyph extends StatelessWidget {
     duration: MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : const Duration(milliseconds: 240),
-    curve: Curves.easeOutBack,
+    curve: TlMotion.standard,
     child: Icon(icon),
     builder: (context, value, child) => Transform.translate(
       offset: Offset(0, -2 * value),
-      child: Transform.scale(scale: 1 + .1 * value, child: child),
+      child: Transform.scale(scale: 1 + .03 * value, child: child),
     ),
   );
 }

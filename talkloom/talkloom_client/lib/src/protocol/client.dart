@@ -763,6 +763,32 @@ class EndpointIngestion extends _isc.EndpointRef {
       );
 }
 
+/// Owner-scoped reading and translation for every stored source type.
+/// {@category Endpoint}
+class EndpointSourceReading extends _isc.EndpointRef {
+  EndpointSourceReading(_isc.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'sourceReading';
+
+  /// Streams complete, aligned batches. Previously saved batches cost no AI
+  /// quota; switching language or modifying a source creates a different key.
+  _ida.Stream<String> readSource(
+    int sourceId,
+    String supportLanguage,
+    String mode,
+  ) => caller.callStreamingServerEndpoint<_ida.Stream<String>, String>(
+    'sourceReading',
+    'readSource',
+    {
+      'sourceId': sourceId,
+      'supportLanguage': supportLanguage,
+      'mode': mode,
+    },
+    {},
+  );
+}
+
 /// {@category Endpoint}
 class EndpointSpeech extends _isc.EndpointRef {
   EndpointSpeech(_isc.EndpointCaller caller) : super(caller);
@@ -856,6 +882,7 @@ class Client extends _isc.ServerpodClientShared {
     pedagogical = EndpointPedagogical(this);
     video = EndpointVideo(this);
     ingestion = EndpointIngestion(this);
+    sourceReading = EndpointSourceReading(this);
     speech = EndpointSpeech(this);
     modules = Modules(this);
   }
@@ -884,6 +911,8 @@ class Client extends _isc.ServerpodClientShared {
 
   late final EndpointIngestion ingestion;
 
+  late final EndpointSourceReading sourceReading;
+
   late final EndpointSpeech speech;
 
   late final Modules modules;
@@ -902,6 +931,7 @@ class Client extends _isc.ServerpodClientShared {
     'pedagogical': pedagogical,
     'video': video,
     'ingestion': ingestion,
+    'sourceReading': sourceReading,
     'speech': speech,
   };
 

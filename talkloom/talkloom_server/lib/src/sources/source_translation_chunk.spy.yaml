@@ -1,0 +1,16 @@
+class: SourceTranslationChunk
+table: source_translation_chunk
+fields:
+  userId: String
+  sourceId: int
+  cacheKey: String
+  supportLanguage: String
+  mode: String
+  segments: String
+  createdAt: DateTime
+indexes:
+  source_translation_cache_key:
+    fields: cacheKey
+    unique: true
+  source_translation_owner_source:
+    fields: userId, sourceId

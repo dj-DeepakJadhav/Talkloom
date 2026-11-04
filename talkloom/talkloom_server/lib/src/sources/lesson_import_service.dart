@@ -52,6 +52,8 @@ class LessonImportService {
         url,
         userScopeId: userScopeId,
         session: session,
+        // Enables the audio-transcription fallback for captionless videos.
+        metaApiKey: session?.serverpod.getPassword('metaApiKey') ?? '',
       );
     } on ImportException {
       rethrow;

@@ -5,9 +5,8 @@ import 'package:talkloom_client/talkloom_client.dart';
 import '../../app/providers.dart';
 import '../../core/failure.dart';
 import '../../design/app_icons.dart';
-import 'package:simple_icons/simple_icons.dart';
 import '../../design/theme.dart';
-import '../../design/components/tl_sticker.dart';
+import '../../design/brand.dart';
 import '../../design/components/tl_button.dart';
 import '../../design/components/tl_states.dart';
 import '../ads/ad_banner.dart';
@@ -84,12 +83,8 @@ class ContentHome extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'talkloom',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.type.titleLarge,
-                ),
+                child: const Align(alignment: Alignment.centerLeft,
+                  child: FittedBox(fit: BoxFit.scaleDown, child: TalkloomWordmark())),
               ),
               const SizedBox(width: 8),
               PopupMenuButton<String>(
@@ -143,23 +138,42 @@ class ContentHome extends ConsumerWidget {
               final today = MaterialLocalizations.of(
                 context,
               ).formatMediumDate(DateTime.now());
-              final headline = count == null
-                  ? 'Today in ${session.target.endonym}'
-                  : count == 0
-                  ? 'Today in ${session.target.endonym}, ready when you are'
-                  : 'Today in ${session.target.endonym}, $count ${count == 1 ? 'piece' : 'pieces'} to continue';
+              final headline = count == 0
+                  ? 'Make room for your words.'
+                  : 'Your next conversation';
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(headline, style: context.type.headline),
                   const SizedBox(height: 4),
-                  Text(today, style: context.type.bodySmall),
+                  Text(
+                    '${session.target.endonym} · $today',
+                    style: context.type.bodySmall,
+                  ),
                 ],
               );
             },
           ),
           const SizedBox(height: 14),
-          TlButton(onPressed: onAdd, icon: AppIcons.plus, label: 'Add content'),
+          ref
+              .watch(sourcesProvider)
+              .maybeWhen(
+                data: (items) => items.isEmpty
+                    ? TlButton(
+                        onPressed: onAdd,
+                        icon: AppIcons.plus,
+                        label: 'Add content',
+                      )
+                    : Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: onAdd,
+                          icon: const Icon(AppIcons.plus, size: 18),
+                          label: const Text('Add content'),
+                        ),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
           const SizedBox(height: 30),
           if (importState.hasError) ...[
             EditorialCard(
@@ -204,10 +218,7 @@ class ContentHome extends ConsumerWidget {
           ref
               .watch(sourcesProvider)
               .when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(28),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                loading: () => const ContentLoading(),
                 error: (error, _) => EditorialCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,83 +242,24 @@ class ContentHome extends ConsumerWidget {
                 data: (items) {
                   if (items.isEmpty) {
                     if (importing) return const SizedBox.shrink();
-                    // Single primary action lives above (Add content).
-                    // Visual empty state: three illustrations, almost no text.
                     return EditorialCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Icon(
+                            AppIcons.bookOpenText,
+                            size: 32,
+                            color: context.colors.success,
+                          ),
+                          const SizedBox(height: 20),
                           Text(
-                            'Don\u2019t save it. Speak it.',
-                            style: context.type.title,
+                            'Bring something you want to talk about.',
+                            style: context.type.titleLarge,
                           ),
                           const SizedBox(height: 12),
-                          Row(
-                            children: const [
-                              _ShareVisual(
-                                kind: TlStickerKind.link,
-                                label: 'Share',
-                              ),
-                              _ShareVisual(
-                                kind: TlStickerKind.book,
-                                label: 'We prepare',
-                              ),
-                              _ShareVisual(
-                                kind: TlStickerKind.speak,
-                                label: 'You speak',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          // Meta first: the competition we want to win.
-                          // Brand glyphs in their original colors.
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              _PlatformIcon(
-                                icon: SimpleIcons.instagram,
-                                label: 'Instagram',
-                                color: const Color(0xFFE1306C),
-                              ),
-                              _PlatformIcon(
-                                icon: SimpleIcons.facebook,
-                                label: 'Facebook',
-                                color: const Color(0xFF1877F2),
-                              ),
-                              _PlatformIcon(
-                                icon: SimpleIcons.threads,
-                                label: 'Threads',
-                                color: null,
-                              ),
-                              _PlatformIcon(
-                                icon: SimpleIcons.youtube,
-                                label: 'YouTube',
-                                color: const Color(0xFFFF0000),
-                              ),
-                              _PlatformIcon(
-                                icon: SimpleIcons.tiktok,
-                                label: 'TikTok',
-                                color: null,
-                              ),
-                              _PlatformIcon(
-                                icon: SimpleIcons.reddit,
-                                label: 'Reddit',
-                                color: const Color(0xFFFF4500),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          const SizedBox(
-                            width: double.infinity,
-                            child: _PlatformMore(label: 'More'),
-                          ),
-                          const SizedBox(height: 8),
                           Text(
-                            'Made for sharing from Meta apps, and the rest.',
-                            style: context.type.caption,
+                            'A video, an article, a few lines of text. We’ll help you find the words and use them in conversation.',
+                            style: context.type.body,
                           ),
                         ],
                       ),
@@ -319,7 +271,7 @@ class ContentHome extends ConsumerWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Continue', style: context.type.titleLarge),
+                      Text('Continue', style: context.type.title),
                       const SizedBox(height: 12),
                       for (var i = 0; i < visible.length; i++)
                         Padding(
@@ -328,6 +280,7 @@ class ContentHome extends ConsumerWidget {
                             index: i,
                             child: _SourceRow(
                               source: visible[i],
+                              featured: i == 0,
                               onRemove: () =>
                                   _removeSource(context, ref, visible[i]),
                             ),
@@ -348,14 +301,19 @@ class ContentHome extends ConsumerWidget {
 }
 
 class _SourceRow extends StatelessWidget {
-  const _SourceRow({required this.source, required this.onRemove});
+  const _SourceRow({
+    required this.source,
+    required this.onRemove,
+    this.featured = false,
+  });
+  final bool featured;
   final Source source;
   final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) => Card(
     elevation: 0,
-    color: context.colors.surfaceRaised,
+    color: featured ? context.colors.surfaceRaised : context.colors.canvas,
     margin: EdgeInsets.zero,
     shape: RoundedRectangleBorder(
       side: BorderSide(color: context.colors.border),
@@ -374,6 +332,7 @@ class _SourceRow extends StatelessWidget {
                 source: source,
                 compact: true,
                 height: 64,
+                decorative: true,
               ),
             ),
           ),
@@ -383,8 +342,8 @@ class _SourceRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  source.title,
-                  maxLines: 1,
+                  sourceDisplayTitle(source),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.type.title,
                 ),
@@ -398,7 +357,7 @@ class _SourceRow extends StatelessWidget {
             onPressed: source.id == null
                 ? null
                 : () => context.push('/content/${source.id}'),
-            icon: const Icon(AppIcons.play),
+            icon: const Icon(AppIcons.arrowRight, size: 20),
           ),
           PopupMenuButton<String>(
             tooltip: 'Content options',
@@ -421,75 +380,6 @@ class _SourceRow extends StatelessWidget {
           ),
         ],
       ),
-    ),
-  );
-}
-
-class _PlatformIcon extends StatelessWidget {
-  const _PlatformIcon({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-  final IconData icon;
-  final String label;
-
-  /// Brand color. Null means the brand is monochrome (Threads, TikTok),
-  /// so fall back to ink to stay visible in both themes.
-  final Color? color;
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: label,
-    button: false,
-    child: ExcludeSemantics(
-      child: Container(
-        width: 44,
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: context.colors.surfaceSunken,
-          shape: BoxShape.circle,
-          border: Border.all(color: context.colors.border),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: color ?? context.colors.textPrimary,
-        ),
-      ),
-    ),
-  );
-}
-
-class _PlatformMore extends StatelessWidget {
-  const _PlatformMore({required this.label});
-  final String label;
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 44,
-    alignment: Alignment.center,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-      color: context.colors.surfaceSunken,
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: context.colors.border),
-    ),
-    child: Text('+more', style: context.type.labelSmall),
-  );
-}
-
-class _ShareVisual extends StatelessWidget {
-  const _ShareVisual({required this.kind, required this.label});
-  final TlStickerKind kind;
-  final String label;
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Column(
-      children: [
-        TlSticker(kind: kind, size: 84, animate: false),
-        const SizedBox(height: 6),
-        Text(label, style: context.type.labelSmall),
-      ],
     ),
   );
 }

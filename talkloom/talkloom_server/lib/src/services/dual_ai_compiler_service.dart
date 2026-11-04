@@ -39,6 +39,49 @@ class DualLessonCompilerService {
     );
   }
 
+  /// Strips emoji and decorative symbols from model-written prose in place.
+  /// Evidence (sourceContext, sourceSentence), lemmas, ids and sentence-builder
+  /// content are never touched, so they still match the source verbatim.
+  static void sanitizeLessonProse(Map<String, dynamic> lesson) {
+    String clean(String value) {
+      final cleaned = stripDecorativeSymbols(value);
+      // Never blank a field the model filled with symbols only.
+      return cleaned.isEmpty ? value : cleaned;
+    }
+
+    void cleanKeys(Object? node, List<String> keys) {
+      if (node is! Map) return;
+      for (final key in keys) {
+        final value = node[key];
+        if (value is String) {
+          node[key] = clean(value);
+        } else if (value is List && value.every((e) => e is String)) {
+          node[key] = [for (final e in value) clean(e as String)];
+        }
+      }
+    }
+
+    cleanKeys(lesson, ['objectives']);
+    for (final key in ['vocabulary', 'grammar', 'activities']) {
+      final items = lesson[key];
+      if (items is! List) continue;
+      for (final item in items) {
+        switch (key) {
+          case 'vocabulary':
+            cleanKeys(item, ['meaning']);
+          case 'grammar':
+            cleanKeys(item, ['explanation']);
+          default:
+            // sentence_builder target and tokens are source evidence.
+            if (item is Map && item['type'] != 'sentence_builder') {
+              cleanKeys(item, ['question', 'options', 'objective']);
+            }
+        }
+      }
+    }
+    cleanKeys(lesson['conversation'], ['role', 'situation', 'culturalNotes']);
+  }
+
   String _safeFailureCode(Object error) => switch (error) {
     LessonDslValidationException(:final code) => code,
     FormatException() => 'invalid_json',
@@ -68,6 +111,7 @@ class DualLessonCompilerService {
                     '${rejectedLesson == null ? "No parseable response was returned." : jsonEncode(rejectedLesson)}',
         );
         rejectedLesson = lesson;
+        sanitizeLessonProse(lesson);
         _normalizeVocabularyIds(lesson, targetLanguage);
         validateDslShape(lesson);
         _validateSourceEvidence(rawText, lesson);

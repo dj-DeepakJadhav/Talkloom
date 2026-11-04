@@ -197,7 +197,7 @@ void main() {
     await tester.tap(find.text('My learning').last);
     await tester.pumpAndSettle();
     expect(find.text('My learning'), findsWidgets);
-    expect(find.textContaining('Today in'), findsNothing);
+    expect(find.text('Your next conversation'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets(
@@ -250,7 +250,7 @@ void main() {
     tester,
   ) async {
     await _mount(tester);
-    expect(find.textContaining('Today in'), findsOneWidget);
+    expect(find.text('Your next conversation'), findsOneWidget);
     await _capture(tester, 'today');
     await tester.tap(find.byTooltip('Continue learning').first);
     await tester.pumpAndSettle();
@@ -275,7 +275,7 @@ void main() {
     await _mount(tester);
     tester.view.physicalSize = const Size(720, 1280);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Today in'), findsOneWidget);
+    expect(find.text('Your next conversation'), findsOneWidget);
     expect(find.byTooltip('Continue learning'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -14,6 +14,8 @@ import '../../design/components/tl_states.dart';
 import '../../design/theme.dart';
 import '../../domain/lesson_content.dart';
 import '../content/content_widgets.dart';
+import '../content/source_reader.dart';
+import '../content/learning_components.dart';
 import '../../widgets/chat_message_view.dart';
 
 enum _Speaker { learner, tutor }
@@ -376,7 +378,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                             IconButton(
                               tooltip: 'Back to Home',
                               onPressed: () => context.go(TlRoutes.home),
-                              icon: const Icon(Icons.arrow_back),
+                              icon: const Icon(AppIcons.arrowLeft),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -422,14 +424,15 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                                     Row(
                                       children: [
                                         Icon(
-                                          Icons.article_outlined,
+                                          AppIcons.fileText,
                                           color: colors.primary,
                                         ),
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Text(
-                                            source?.title ??
-                                                'Your shared content',
+                                            source == null
+                                                ? 'Your shared content'
+                                                : sourceDisplayTitle(source),
                                             style: context.type.bodyStrong,
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
@@ -446,21 +449,9 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                                         ),
                                       ),
                                     const Divider(height: 16),
-                                    Text(
-                                      'YOUR CONVERSATION GOAL',
-                                      style: context.type.caption.copyWith(
-                                        color: colors.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      plan.situation,
-                                      style: context.type.bodyStrong,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Your partner: ${plan.role}. Start small. Mistakes are welcome.',
-                                      style: context.type.caption,
+                                    SpeakingPrompt(
+                                      situation: plan.situation,
+                                      role: plan.role,
                                     ),
                                     if (source != null &&
                                         source.rawText.trim().isNotEmpty)
@@ -474,11 +465,10 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                                           ),
                                           children: [
                                             SizedBox(
-                                              height: 130,
+                                              height: 320,
                                               child: SingleChildScrollView(
-                                                child: SelectableText(
-                                                  source.rawText,
-                                                  style: context.type.body,
+                                                child: SourceReader(
+                                                  source: source,
                                                 ),
                                               ),
                                             ),
@@ -575,23 +565,9 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                           color: colors.textMuted,
                         ),
                       ),
-                    if (message.evaluationStatus == 'evaluated')
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            AppIcons.circleCheck,
-                            size: 14,
-                            color: colors.success,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Checked against your lesson',
-                            style: context.type.caption.copyWith(
-                              color: colors.textMuted,
-                            ),
-                          ),
-                        ],
+                    if (message.evaluationStatus != null)
+                      EvaluationFeedback(
+                        checked: message.evaluationStatus == 'evaluated',
                       ),
                   ],
                 )
@@ -611,7 +587,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                           langCode: session.target.voiceLocale,
                         )
                       : null,
-                  icon: const Icon(Icons.volume_up_outlined, size: 18),
+                  icon: const Icon(AppIcons.volume2, size: 18),
                 ),
         );
       },
@@ -631,12 +607,14 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           if (!compact) ...[
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
+                Semantics(
+                  liveRegion: true,
                   child: Text(
                     _isTranscribing
-                        ? 'Muse is listening to your recording…'
+                        ? 'Transcribing your recording…'
                         : _isRecording
                         ? (_useMuseVoice
                               ? 'Recording for Muse… tap stop, then review your words.'
@@ -645,36 +623,43 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
                     style: context.type.caption,
                   ),
                 ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Muse'),
-                  tooltip:
-                      'Transcribe with Muse Voice (biased to this lesson’s words)',
-                  selected: _useMuseVoice,
-                  onSelected: _isSending || _isTranscribing
-                      ? null
-                      : (selected) => setState(() {
-                          _useMuseVoice = selected;
-                          _museHeardNote = null;
-                        }),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: _isSending || _isTranscribing
-                      ? null
-                      : () => _toggleRecording(plan),
-                  icon: Icon(
-                    _isRecording
-                        ? Icons.stop
-                        : (_isTranscribing
-                              ? Icons.hourglass_empty
-                              : Icons.mic_none),
-                  ),
-                  label: Text(
-                    _isRecording
-                        ? 'Stop'
-                        : (_isTranscribing ? 'Check…' : 'Speak'),
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Muse'),
+                      tooltip:
+                          'Transcribe with Muse Voice (biased to this lesson’s words)',
+                      selected: _useMuseVoice,
+                      onSelected: _isSending || _isTranscribing
+                          ? null
+                          : (selected) => setState(() {
+                              _useMuseVoice = selected;
+                              _museHeardNote = null;
+                            }),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: _isSending || _isTranscribing
+                          ? null
+                          : () => _toggleRecording(plan),
+                      icon: Icon(
+                        _isRecording
+                            ? AppIcons.square
+                            : (_isTranscribing
+                                  ? AppIcons.refreshCw
+                                  : AppIcons.mic),
+                      ),
+                      label: Text(
+                        _isRecording
+                            ? 'Stop'
+                            : (_isTranscribing ? 'Check…' : 'Speak'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -713,7 +698,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
               Expanded(
                 child: TextField(
                   controller: _input,
-                  enabled: !_isSending,
+                  enabled: !_isSending && !_isTranscribing,
                   minLines: 1,
                   maxLines: 4,
                   textInputAction: TextInputAction.send,
@@ -729,15 +714,19 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen>
               if (compact) ...[
                 IconButton.outlined(
                   tooltip: _isRecording ? 'Stop' : 'Speak',
-                  onPressed: _isSending ? null : () => _toggleRecording(plan),
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic_none),
+                  onPressed: _isSending || _isTranscribing
+                      ? null
+                      : () => _toggleRecording(plan),
+                  icon: Icon(_isRecording ? AppIcons.square : AppIcons.mic),
                 ),
                 const SizedBox(width: 10),
               ],
               IconButton.filled(
                 tooltip: 'Send reply',
-                onPressed: _isSending ? null : () => _send(plan),
-                icon: const Icon(Icons.arrow_upward),
+                onPressed: _isSending || _isTranscribing
+                    ? null
+                    : () => _send(plan),
+                icon: const Icon(AppIcons.arrowUp),
               ),
             ],
           ),

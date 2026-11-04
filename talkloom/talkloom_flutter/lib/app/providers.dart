@@ -16,15 +16,27 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
 
 class AppThemeController extends Notifier<ThemeMode> {
   @override
-  ThemeMode build() =>
-      ref.watch(sharedPreferencesProvider).getBool('talkloom.dark-mode') == true
-      ? ThemeMode.dark
-      : ThemeMode.light;
-  void toggle() {
-    state = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    ref
-        .read(sharedPreferencesProvider)
-        .setBool('talkloom.dark-mode', state == ThemeMode.dark);
+  ThemeMode build() {
+    final preferences = ref.watch(sharedPreferencesProvider);
+    final saved = preferences.getString('talkloom.appearance.v1');
+    final mode = ThemeMode.values
+        .where((mode) => mode.name == saved)
+        .firstOrNull;
+    if (mode != null) return mode;
+    // Retain a previously chosen appearance; new installs follow the device.
+    final legacy = preferences.getBool('talkloom.dark-mode');
+    return legacy == null
+        ? ThemeMode.system
+        : legacy
+        ? ThemeMode.dark
+        : ThemeMode.light;
+  }
+
+  Future<void> setMode(ThemeMode mode) async {
+    state = mode;
+    final preferences = ref.read(sharedPreferencesProvider);
+    await preferences.setString('talkloom.appearance.v1', mode.name);
+    await preferences.remove('talkloom.dark-mode');
   }
 }
 
@@ -251,10 +263,11 @@ final sourcesProvider = FutureProvider.autoDispose<List<Source>>((ref) async {
 
 /// Agent-Reach channel catalog: which connected sources this server can
 /// read. Empty while loading or when unreachable (never blocks importing).
-final connectedSourcesProvider =
-    FutureProvider.autoDispose<List<String>>((ref) async {
-      return ref.watch(lessonRepositoryProvider).connectedChannels();
-    });
+final connectedSourcesProvider = FutureProvider.autoDispose<List<String>>((
+  ref,
+) async {
+  return ref.watch(lessonRepositoryProvider).connectedChannels();
+});
 
 /// Vocabulary progress for the active target language.
 final learnerStateProvider = FutureProvider.autoDispose<LearnerState?>((

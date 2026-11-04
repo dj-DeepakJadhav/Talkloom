@@ -41,6 +41,7 @@ class Failure implements Exception {
     'unreadable': 'Could not read this source',
     'wrong_language': 'Not in your learning language',
     'quota_exceeded': 'Daily free limit reached',
+    'translation_failed': 'Translation unavailable',
   };
 
   static Failure from(Object error) {
@@ -51,9 +52,14 @@ class Failure implements Exception {
       return Failure(
         error.message,
         title: _importTitles[error.code] ?? 'Could not finish this import',
-        isRetryable: error.code == 'timeout' || error.code == 'unavailable',
+        isRetryable:
+            error.code == 'timeout' ||
+            error.code == 'unavailable' ||
+            error.code == 'translation_failed',
         suggestsPastingText:
-            !quota && error.code != 'unsupported_link',
+            !quota &&
+            error.code != 'unsupported_link' &&
+            error.code != 'translation_failed',
         cause: error,
       );
     }

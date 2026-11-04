@@ -283,9 +283,11 @@ class _LanguageGrid extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        language.flag,
-                        style: const TextStyle(fontSize: TlGlyph.lg),
+                      ExcludeSemantics(
+                        child: Text(
+                          language.code.toUpperCase(),
+                          style: context.type.labelSmall,
+                        ),
                       ),
                       const SizedBox(width: TlSpace.sm),
                       Expanded(

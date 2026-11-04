@@ -64,6 +64,7 @@ CustomTransitionPage<void> _slidePage({
     transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 220),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.disableAnimationsOf(context)) return child;
       final offset = Tween<Offset>(
         begin: const Offset(0.12, 0),
         end: Offset.zero,
@@ -91,6 +92,7 @@ CustomTransitionPage<void> _sheetPage({
     transitionDuration: const Duration(milliseconds: 320),
     reverseTransitionDuration: const Duration(milliseconds: 220),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.disableAnimationsOf(context)) return child;
       final offset = Tween<Offset>(
         begin: const Offset(0, 0.18),
         end: Offset.zero,

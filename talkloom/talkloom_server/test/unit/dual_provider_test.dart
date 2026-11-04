@@ -125,7 +125,7 @@ void main() {
     test(
       'does not manufacture a lesson when the Meta key is not configured',
       () async {
-      final compiler = DualLessonCompilerService();
+        final compiler = DualLessonCompilerService();
 
         await expectLater(
           compiler.compileLesson(
@@ -308,7 +308,8 @@ Map<String, dynamic> _lessonDsl({
     (index) => {
       'concept': 'Grammar pattern $index',
       'sourceSentence': 'Ich lerne Deutsch und spreche über Berlin.',
-      'explanation': 'A source-grounded explanation.',
+      'explanation':
+          'This pattern is source grounded, and the explanation says when and how the learner should use the construction.',
     },
   ),
   'activities': [

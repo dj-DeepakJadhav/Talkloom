@@ -193,6 +193,8 @@ class TestEndpoints {
 
   late final _IngestionEndpoint ingestion;
 
+  late final _SourceReadingEndpoint sourceReading;
+
   late final _SpeechEndpoint speech;
 }
 
@@ -248,6 +250,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
     ingestion = _IngestionEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    sourceReading = _SourceReadingEndpoint(
       endpoints,
       serializationManager,
     );
@@ -1763,6 +1769,55 @@ class _IngestionEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _SourceReadingEndpoint {
+  _SourceReadingEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _is.EndpointDispatch _endpointDispatch;
+
+  final _is.SerializationManager _serializationManager;
+
+  _ida.Stream<String> readSource(
+    _ist.TestSessionBuilder sessionBuilder,
+    int sourceId,
+    String supportLanguage,
+    String mode,
+  ) {
+    var _localTestStreamManager = _ist.TestStreamManager<String>();
+    _ist.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _ist.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'sourceReading',
+              method: 'readSource',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'sourceReading',
+              methodName: 'readSource',
+              arguments: {
+                'sourceId': sourceId,
+                'supportLanguage': supportLanguage,
+                'mode': mode,
+              },
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
   }
 }
 

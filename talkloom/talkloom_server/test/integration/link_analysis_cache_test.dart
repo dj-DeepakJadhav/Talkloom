@@ -20,7 +20,12 @@ class _NoFetchIngestion extends IngestionService {
   int fetches = 0;
 
   @override
-  Future<String> ingestUrl(String url, {String? userScopeId}) async {
+  Future<String> ingestUrl(
+    String url, {
+    String? userScopeId,
+    Session? session,
+    String metaApiKey = '',
+  }) async {
     fetches++;
     throw StateError('unexpected fetch');
   }

@@ -9,10 +9,11 @@ import 'package:record/record.dart';
 /// Recording stays on-device until the learner stops; only the finished
 /// clip is uploaded for transcription.
 class MuseVoiceRecorder {
-  MuseVoiceRecorder({AudioRecorder? recorder})
-    : _recorder = recorder ?? AudioRecorder();
+  // Keep the public injection name while creating native resources on demand.
+  // ignore: prefer_initializing_formals
+  MuseVoiceRecorder({AudioRecorder? recorder}) : _recorder = recorder;
 
-  final AudioRecorder _recorder;
+  AudioRecorder? _recorder;
   String? _path;
   bool _recording = false;
 
@@ -22,11 +23,12 @@ class MuseVoiceRecorder {
   /// cannot record WAV (caller falls back to OS recognition).
   Future<bool> start() async {
     try {
-      if (!await _recorder.hasPermission()) return false;
+      final recorder = _recorder ??= AudioRecorder();
+      if (!await recorder.hasPermission()) return false;
       final dir = Directory.systemTemp;
       _path =
           '${dir.path}/talkloom_muse_${DateTime.now().millisecondsSinceEpoch}.wav';
-      await _recorder.start(
+      await recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
           sampleRate: 24000,
@@ -47,7 +49,7 @@ class MuseVoiceRecorder {
   Future<String?> stopAndRead() async {
     _recording = false;
     try {
-      final path = await _recorder.stop() ?? _path;
+      final path = await _recorder?.stop() ?? _path;
       if (path == null) return null;
       final file = File(path);
       if (!file.existsSync()) return null;
@@ -67,10 +69,12 @@ class MuseVoiceRecorder {
   Future<void> cancel() async {
     _recording = false;
     try {
-      await _recorder.stop();
+      await _recorder?.stop();
     } catch (_) {}
     _path = null;
   }
 
-  void dispose() => _recorder.dispose();
+  void dispose() {
+    _recorder?.dispose();
+  }
 }

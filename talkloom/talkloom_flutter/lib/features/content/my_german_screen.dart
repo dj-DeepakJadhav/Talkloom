@@ -284,7 +284,7 @@ class _Entry extends StatelessWidget {
             const SizedBox(height: 12),
             TextButton.icon(
               onPressed: onSource,
-              icon: const Icon(Icons.arrow_outward, size: 16),
+              icon: const Icon(AppIcons.arrowRight, size: 16),
               label: Text(
                 'From $source',
                 maxLines: 2,

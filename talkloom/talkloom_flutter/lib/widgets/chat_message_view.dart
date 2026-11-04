@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import '../../design/theme.dart';
+import '../../design/app_icons.dart';
 
 /// Matches the tutor micro-syntax for unlearned vocabulary:
 ///
@@ -145,7 +146,7 @@ class ChatMessageView extends StatelessWidget {
                   ? colors.primarySoft
                   : colors.surfaceRaised,
               child: Icon(
-                isLearner ? Icons.person_outline : Icons.chat_bubble_outline,
+                isLearner ? AppIcons.userRound : AppIcons.messagesSquare,
                 size: 18,
                 color: colors.primary,
               ),

@@ -15,6 +15,7 @@ class AiQuotaService {
   static const guestLimits = <String, int>{
     'import': 3,
     'turn': 30,
+    'translation': 30,
     'transcription': 10,
     'illustration': 5,
   };
@@ -22,6 +23,7 @@ class AiQuotaService {
   static const registeredLimits = <String, int>{
     'import': 10,
     'turn': 100,
+    'translation': 100,
     'transcription': 30,
     'illustration': 20,
   };
@@ -82,7 +84,7 @@ class AiQuotaService {
 
   static int _count(AiUsage row, String kind) => switch (kind) {
     'import' => row.imports,
-    'turn' => row.conversationTurns,
+    'turn' || 'translation' => row.conversationTurns,
     'transcription' => row.transcriptions,
     'illustration' => row.illustrations,
     'video' => row.imports, // video chapters ride on the import allowance
@@ -95,6 +97,7 @@ class AiQuotaService {
       case 'video':
         row.imports += 1;
       case 'turn':
+      case 'translation':
         row.conversationTurns += 1;
       case 'transcription':
         row.transcriptions += 1;
@@ -106,6 +109,7 @@ class AiQuotaService {
   static String _label(String kind) => switch (kind) {
     'import' => 'lesson imports',
     'turn' => 'tutor turns',
+    'translation' => 'translation batches and tutor turns',
     'transcription' => 'transcriptions',
     'illustration' => 'illustrations',
     'video' => 'video chapters',

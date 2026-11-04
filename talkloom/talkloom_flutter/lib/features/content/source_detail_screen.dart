@@ -8,11 +8,11 @@ import '../../app/providers.dart';
 import '../../app/router.dart';
 import '../../core/failure.dart';
 import '../../design/theme.dart';
-import '../../design/components/tl_sticker.dart';
-import '../../design/components/tl_surface.dart';
+import '../../design/components/tl_states.dart';
 import '../../domain/lesson_content.dart';
 import 'content_widgets.dart';
-import 'source_artwork_hero.dart';
+import 'source_reader.dart';
+import 'genui_lesson_preview.dart';
 import '../practice/practice_launcher.dart';
 
 class SourceDetailScreen extends ConsumerWidget {
@@ -62,7 +62,12 @@ class SourceDetailScreen extends ConsumerWidget {
         child: ref
             .watch(sourcesProvider)
             .when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: ContentLoading(),
+                ),
+              ),
               error: (error, _) => _Failure(
                 message: Failure.from(error).message,
                 onRetry: () => ref.invalidate(sourcesProvider),
@@ -81,20 +86,21 @@ class SourceDetailScreen extends ConsumerWidget {
                 return ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
-                    SourceArtworkHero(
-                      sourceId: source.id ?? -1,
-                      subject: source.title,
-                    ),
-                    const SizedBox(height: 14),
+                    if (sourceThumbnail(source) != null) ...[
+                      SourceArtwork(source: source, decorative: true),
+                      const SizedBox(height: 14),
+                    ],
                     SourceCaption(source: source),
                     const SizedBox(height: 8),
-                    Text(source.title, style: context.type.headline),
+                    Text(
+                      sourceDisplayTitle(source),
+                      style: context.type.headline,
+                    ),
                     const SizedBox(height: 20),
                     ref
                         .watch(sourceLessonProvider(sourceId))
                         .when(
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
+                          loading: () => const ContentLoading(),
                           error: (error, _) => _Failure(
                             message: Failure.from(error).message,
                             onRetry: () =>
@@ -143,12 +149,12 @@ class SourceDetailScreen extends ConsumerWidget {
                     EditorialCard(
                       child: ExpansionTile(
                         tilePadding: EdgeInsets.zero,
-                        title: const Text('Original source'),
+                        title: const Text('Read & translate'),
+                        subtitle: const Text('Original text and translations'),
+                        shape: const Border(),
+                        collapsedShape: const Border(),
                         children: [
-                          SelectableText(
-                            source.rawText,
-                            style: context.type.body,
-                          ),
+                          SourceReader(source: source),
                         ],
                       ),
                     ),
@@ -300,50 +306,42 @@ class _LessonKnowledgeTabsState extends ConsumerState<_LessonKnowledgeTabs> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 1.05,
-          children: [
-            _ActivityTile(
-              icon: AppIcons.bookOpenText,
-              label: 'Vocabulary',
-              count: words.length,
-              onTap: sourcePath == null
-                  ? null
-                  : () => context.push('$sourcePath/vocabulary'),
-            ),
-            _ActivityTile(
-              icon: AppIcons.spellCheck,
-              label: 'Grammar',
-              count: grammar.length,
-              onTap: sourcePath == null
-                  ? null
-                  : () => context.push('$sourcePath/grammar'),
-            ),
-            _ActivityTile(
-              icon: AppIcons.gamepad2,
-              label: 'Play',
-              onTap: widget.onPractice ?? widget.onLesson,
-            ),
-            _ActivityTile(
-              icon: AppIcons.speech,
-              label: 'Speak',
-              onTap: widget.onSpeak,
-            ),
-          ],
+        Text('Use your words', style: context.type.headline),
+        const SizedBox(height: 8),
+        Text(
+          'Start a conversation about this source, or explore its language first.',
+          style: context.type.body,
         ),
-        if (words.isNotEmpty && sourcePath != null) ...[
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: () => context.push('$sourcePath/vocabulary'),
-            icon: const Icon(AppIcons.play, size: 18),
-            label: const Text('Continue vocabulary'),
-          ),
-        ],
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          onPressed: widget.onSpeak,
+          icon: const Icon(AppIcons.mic, size: 20),
+          label: const Text('Speak'),
+        ),
+        const SizedBox(height: 20),
+        _ActivityTile(
+          icon: AppIcons.bookOpenText,
+          label: 'Vocabulary',
+          count: words.length,
+          onTap: sourcePath == null
+              ? null
+              : () => context.push('$sourcePath/vocabulary'),
+        ),
+        const SizedBox(height: 8),
+        _ActivityTile(
+          icon: AppIcons.spellCheck,
+          label: 'Grammar',
+          count: grammar.length,
+          onTap: sourcePath == null
+              ? null
+              : () => context.push('$sourcePath/grammar'),
+        ),
+        const SizedBox(height: 8),
+        _ActivityTile(
+          icon: AppIcons.gamepad2,
+          label: 'Play',
+          onTap: widget.onPractice ?? widget.onLesson,
+        ),
         const SizedBox(height: 8),
         Center(
           child: TextButton.icon(
@@ -360,6 +358,16 @@ class _LessonKnowledgeTabsState extends ConsumerState<_LessonKnowledgeTabs> {
             ),
           ),
         ),
+        if (words.isNotEmpty || grammar.isNotEmpty)
+          TextButton(
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              builder: (_) => GenUiLessonPreview(lesson: lesson),
+            ),
+            child: const Text('Explore lesson preview'),
+          ),
       ],
     );
   }
@@ -379,50 +387,28 @@ class _ActivityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = switch (label) {
-      'Grammar' => context.colors.infoSoft,
-      'Play' => context.colors.successSoft,
-      'Speak' => context.colors.primarySoft,
-      _ => context.colors.surfaceRaised,
-    };
-    final face = Material(
-      color: tint,
-      elevation: 2,
-      shadowColor: context.colors.shadow,
-      borderRadius: BorderRadius.circular(16),
+    return Material(
+      color: context.colors.surfaceRaised,
+      shape: RoundedRectangleBorder(
+        borderRadius: TlRadius.controlRadius,
+        side: BorderSide(color: context.colors.border),
+      ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: null,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: FittedBox(
-                  child: TlSticker(
-                    kind: stickerKindForIcon(icon),
-                    size: 100,
-                    animate: false,
-                  ),
-                ),
+      child: ListTile(
+        minVerticalPadding: 14,
+        leading: Icon(icon, color: context.colors.textSecondary, size: 22),
+        title: Text(label, style: context.type.title),
+        subtitle: count == null
+            ? null
+            : Text(
+                '$count ${label == 'Grammar' ? 'patterns' : 'words'}',
+                style: context.type.caption,
               ),
-              const SizedBox(height: 4),
-              Text(label, style: context.type.label),
-              if (count != null) Text('$count', style: context.type.labelSmall),
-            ],
-          ),
-        ),
+        trailing: const Icon(AppIcons.chevronRight, size: 18),
+        enabled: onTap != null,
+        onTap: onTap,
       ),
     );
-    return onTap == null
-        ? face
-        : TlPressable(
-            onTap: onTap!,
-            semanticLabel: count == null ? label : '$label $count',
-            child: SizedBox.expand(child: face),
-          );
   }
 }
 
@@ -433,13 +419,7 @@ class _Failure extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(message, style: context.type.body),
-        TextButton(onPressed: onRetry, child: const Text('Try again')),
-      ],
-    ),
+    child: TlErrorState(message: message, onRetry: onRetry),
   );
 }
 

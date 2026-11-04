@@ -13,7 +13,6 @@ import '../../core/failure.dart';
 import '../../domain/lesson_content.dart';
 import '../../domain/language.dart';
 import '../../design/theme.dart';
-import '../../design/components/tl_sticker.dart';
 import '../content/source_detail_screen.dart' show importStageMessage;
 
 /// Add the learner's own source. No fabricated examples or sample uploads.
@@ -821,10 +820,13 @@ class _PreparationArtworkTile extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => TlSticker(
-    kind: stickerKindForIcon(icon),
-    size: 56,
-    animate: icon == AppIcons.sparkles,
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: SizedBox.square(
+      dimension: 56,
+      child: Center(
+        child: Icon(icon, size: 28, color: context.colors.textPrimary),
+      ),
+    ),
   );
 }
 

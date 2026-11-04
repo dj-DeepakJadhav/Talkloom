@@ -4,8 +4,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show ByteData, FontLoader, MethodChannel;
+import 'package:flutter/services.dart' show ByteData, FontLoader, MethodChannel;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -302,14 +301,14 @@ void main() {
       voice.debugEngine = FakeSpeechEngine(initOk: false, permission: false);
       await pumpScreen(tester, const SpeakScreen());
 
-      await tester.tap(find.byIcon(Icons.mic_none).first);
+      await tester.tap(find.text('Speak').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.textContaining('Turn it on in Settings'), findsWidgets);
       expect(find.text('Open Settings'), findsOneWidget);
       // Mic button is back to idle, not stuck on "Stop".
-      expect(find.byIcon(Icons.stop), findsNothing);
+      expect(find.text('Stop'), findsNothing);
       // The typed composer is still there and usable.
       final field = tester.widget<TextField>(find.byType(TextField).last);
       expect(field.enabled, isNot(false));
@@ -321,9 +320,9 @@ void main() {
       voice.debugEngine = engine;
       await pumpScreen(tester, const SpeakScreen());
 
-      await tester.tap(find.byIcon(Icons.mic_none).first);
+      await tester.tap(find.text('Speak').first);
       await tester.pump();
-      expect(find.byIcon(Icons.stop), findsWidgets);
+      expect(find.text('Stop'), findsWidgets);
 
       engine.emit('Guten');
       await tester.pump();
@@ -339,6 +338,7 @@ void main() {
     ) async {
       voice.debugEngine = FakeSpeechEngine(initOk: false, permission: true);
       await pumpScreen(tester, const ImmersiveVoiceModal());
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.textContaining('not available on this device'), findsWidgets);

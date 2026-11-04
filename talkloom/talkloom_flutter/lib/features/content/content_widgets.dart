@@ -1,9 +1,9 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import '../../design/app_icons.dart';
 import 'package:talkloom_client/talkloom_client.dart';
 import '../../design/theme.dart';
+import 'source_text.dart';
+import '../../design/components/tl_states.dart';
 
 enum SourceKind {
   youtubeVideo,
@@ -71,9 +71,26 @@ IconData _kindIcon(SourceKind kind) => switch (kind) {
 
 /// First ~90 characters of the source text, or the title when it is empty.
 String sourceExcerpt(Source source, {int max = 90}) {
-  final text = source.rawText.replaceAll(RegExp(r'\s+'), ' ').trim();
+  final text = readableSourceText(
+    source.rawText,
+  ).replaceAll(RegExp(r'\s+'), ' ').trim();
   if (text.isEmpty) return source.title;
   return text.length <= max ? text : '${text.substring(0, max).trimRight()}…';
+}
+
+/// A source can arrive without a title; always give it a readable identity.
+String sourceDisplayTitle(Source source) {
+  final title = readableSourceText(source.title).trim();
+  if (title.isNotEmpty) return title;
+  final line = readableSourceText(source.rawText)
+      .split('\n')
+      .map(
+        (line) => line.replaceFirst(RegExp(r'^\s*(?:#+|[-*])\s*'), '').trim(),
+      )
+      .where((line) => line.isNotEmpty && !line.startsWith('['))
+      .firstOrNull;
+  if (line == null) return '${sourcePlatform(source)} lesson';
+  return line.length > 80 ? '${line.substring(0, 80).trimRight()}…' : line;
 }
 
 String? sourceThumbnail(Source source) {
@@ -101,6 +118,7 @@ class SourceArtwork extends StatelessWidget {
     required this.source,
     this.height = 150,
     this.compact = false,
+    this.decorative = false,
   });
   final Source source;
 
@@ -109,6 +127,7 @@ class SourceArtwork extends StatelessWidget {
 
   /// Fixed-[height] tile (instead of a 16:9 frame) when there is no thumbnail.
   final bool compact;
+  final bool decorative;
 
   @override
   Widget build(BuildContext context) {
@@ -136,11 +155,16 @@ class SourceArtwork extends StatelessWidget {
         child: _ThumbImage(thumbnail: thumbnail, tile: fill),
       );
     }
+    final artwork = ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: body,
+    );
+    if (decorative) return ExcludeSemantics(child: artwork);
     return Semantics(
       container: true,
-      label: '${sourcePlatform(source)}: ${source.title}',
+      label: '${sourcePlatform(source)}: ${sourceDisplayTitle(source)}',
       excludeSemantics: true,
-      child: ClipRRect(borderRadius: BorderRadius.circular(16), child: body),
+      child: artwork,
     );
   }
 }
@@ -189,20 +213,6 @@ class _ShortFrame extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           ColoredBox(color: context.colors.primarySoft),
-          ImageFiltered(
-            imageFilter: ImageFilter.blur(
-              sigmaX: 14,
-              sigmaY: 14,
-              tileMode: TileMode.clamp,
-            ),
-            child: Transform.scale(
-              scale: 1.3,
-              child: _ThumbImage(
-                thumbnail: thumbnail,
-                tile: const SizedBox.expand(),
-              ),
-            ),
-          ),
           Center(
             child: SizedBox(
               height: h.toDouble(),
@@ -230,6 +240,18 @@ class _SourceTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final compact = height != null;
+    if (compact) {
+      return SizedBox(
+        height: height,
+        width: double.infinity,
+        child: ColoredBox(
+          color: colors.surfaceSunken,
+          child: Center(
+            child: Icon(_kindIcon(kind), size: 26, color: colors.primaryText),
+          ),
+        ),
+      );
+    }
     final content = Padding(
       padding: EdgeInsets.all(compact ? 12 : 16),
       child: Column(
@@ -269,10 +291,10 @@ class _SourceTile extends StatelessWidget {
           const SizedBox(height: 8),
           Expanded(
             child: Text(
-              sourceExcerpt(source),
+              sourceDisplayTitle(source),
               maxLines: compact ? 2 : 3,
               overflow: TextOverflow.ellipsis,
-              style: context.type.bodySmall.copyWith(color: colors.textPrimary),
+              style: context.type.titleLarge,
             ),
           ),
         ],
@@ -310,5 +332,42 @@ class SourceCaption extends StatelessWidget {
   Widget build(BuildContext context) => Text(
     '${sourcePlatform(source)} · ${source.cefrLevel}',
     style: context.type.caption,
+  );
+}
+
+/// Stable row-shaped placeholders; no fabricated titles or progress values.
+class ContentLoading extends StatelessWidget {
+  const ContentLoading({super.key});
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: 'Loading your content',
+    liveRegion: true,
+    child: ExcludeSemantics(
+      child: Column(
+        children: [
+          for (var i = 0; i < 3; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  const TlSkeleton(height: 64, width: 64),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TlSkeleton(height: 18),
+                        SizedBox(height: 10),
+                        TlSkeleton(height: 12, width: 120),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    ),
   );
 }

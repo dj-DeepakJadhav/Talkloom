@@ -9,7 +9,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show ByteData, FontLoader, rootBundle;
+import 'package:flutter/services.dart'
+    show ByteData, FontLoader, MethodChannel, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
@@ -233,6 +234,7 @@ class _Size {
 
 const _portraits = [
   _Size('320x568', 320, 568),
+  _Size('360x800', 360, 800),
   _Size('375x812', 375, 812),
   _Size('414x896', 414, 896),
   _Size('768x1024', 768, 1024),
@@ -245,12 +247,19 @@ enum _Inset { none, safeArea, keyboard }
 const _dpr = 2.0;
 
 class _Variant {
-  const _Variant(this.size, this.scale, this.inset);
+  const _Variant(
+    this.size,
+    this.scale,
+    this.inset, {
+    this.brightness = Brightness.light,
+  });
+  final Brightness brightness;
   final _Size size;
   final double scale;
   final _Inset inset;
   @override
-  String toString() => '${size.label} @${scale}x ${inset.name}';
+  String toString() =>
+      '${size.label} @${scale}x ${inset.name} ${brightness.name}';
 }
 
 final _variants = <_Variant>[
@@ -261,6 +270,18 @@ final _variants = <_Variant>[
         // usable app (landscape IMEs go full screen), so that case is skipped.
         if (inset != _Inset.keyboard || size.h > size.w)
           _Variant(size, scale, inset),
+  const _Variant(
+    _Size('360x800', 360, 800),
+    1.5,
+    _Inset.none,
+    brightness: Brightness.dark,
+  ),
+  const _Variant(
+    _Size('1280x800', 1280, 800),
+    1,
+    _Inset.none,
+    brightness: Brightness.dark,
+  ),
 ];
 
 /// Links drawn by serverpod_auth_idp_flutter's email form inside a hard-coded
@@ -350,7 +371,7 @@ Future<List<String>> _runVariant(
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: buildTalkloomTheme(Brightness.light),
+          theme: buildTalkloomTheme(v.brightness),
           builder: (context, child) => RepaintBoundary(
             key: captureKey,
             child: TlAppViewport(child: child ?? const SizedBox.shrink()),
@@ -370,28 +391,34 @@ Future<List<String>> _runVariant(
     }
     // Touch targets are size-independent, so audit them once per scale on a
     // common phone viewport rather than in every variant.
-    if (v.size.label == '375x812' && v.inset == _Inset.none) {
-      if (const bool.fromEnvironment('CAPTURE_DESIGN') && v.scale == 1) {
-        await tester.runAsync(
-          () => precacheImage(
-            const AssetImage('assets/illustrations/share-and-learn.png'),
-            tester.element(find.byType(MaterialApp)),
-          ),
-        );
-        await tester.pump();
-        await tester.runAsync(() async {
-          final boundary =
-              captureKey.currentContext!.findRenderObject()!
-                  as RenderRepaintBoundary;
-          final shot = await boundary.toImage(pixelRatio: 2);
-          final bytes = await shot.toByteData(format: ui.ImageByteFormat.png);
-          Directory('build/design-review').createSync(recursive: true);
-          await File(
-            'build/design-review/${screen.name.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-').toLowerCase()}.png',
-          ).writeAsBytes(bytes!.buffer.asUint8List());
-          shot.dispose();
-        });
-      }
+    if (const bool.fromEnvironment('CAPTURE_DESIGN') &&
+        v.inset == _Inset.none &&
+        ((v.scale == 1 &&
+                ['375x812', '360x800', '1280x800'].contains(v.size.label)) ||
+            v.brightness == Brightness.dark)) {
+      await tester.runAsync(
+        () => precacheImage(
+          const AssetImage('assets/illustrations/share-and-learn.png'),
+          tester.element(find.byType(MaterialApp)),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(() async {
+        final boundary =
+            captureKey.currentContext!.findRenderObject()!
+                as RenderRepaintBoundary;
+        final shot = await boundary.toImage(pixelRatio: 2);
+        final bytes = await shot.toByteData(format: ui.ImageByteFormat.png);
+        Directory('build/design-review').createSync(recursive: true);
+        await File(
+          'build/design-review/${v.size.label}-${v.brightness.name}-${screen.name.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-').toLowerCase()}.png',
+        ).writeAsBytes(bytes!.buffer.asUint8List());
+        shot.dispose();
+      });
+    }
+    if (v.size.label == '375x812' &&
+        v.inset == _Inset.none &&
+        v.brightness == Brightness.light) {
       final handle = tester.ensureSemantics();
       await tester.pump();
       final result = await iOSTapTargetGuideline.evaluate(tester);
@@ -429,6 +456,11 @@ class _Host extends StatelessWidget {
 
 void main() {
   setUpAll(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+          (_) async => null,
+        );
     await (FontLoader(
       'MaterialIcons',
     )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();

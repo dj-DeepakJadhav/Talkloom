@@ -36,23 +36,44 @@ void main() {
   test('Editorial palette supports light and dark appearance', () {
     expect(TlColors.light.canvas, TlPalette.warmPaper);
     expect(TlColors.light.primary, TlPalette.espresso);
-    expect(TlColors.dark.primary, TlPalette.coralLight);
+    expect(TlColors.dark.primary, TlPalette.nightText);
   });
 
-  test('Appearance starts light and persists after switching', () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    );
-    addTearDown(container.dispose);
-    expect(container.read(appThemeProvider), ThemeMode.light);
-    container.read(appThemeProvider.notifier).toggle();
-    expect(container.read(appThemeProvider), ThemeMode.dark);
-    expect(prefs.getBool('talkloom.dark-mode'), isTrue);
-    container.read(appThemeProvider.notifier).toggle();
-    expect(container.read(appThemeProvider), ThemeMode.light);
-  });
+  test(
+    'Appearance follows the system by default and persists explicit modes',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      expect(container.read(appThemeProvider), ThemeMode.system);
+      for (final mode in [ThemeMode.dark, ThemeMode.light, ThemeMode.system]) {
+        await container.read(appThemeProvider.notifier).setMode(mode);
+        expect(container.read(appThemeProvider), mode);
+        expect(prefs.getString('talkloom.appearance.v1'), mode.name);
+        container.invalidate(appThemeProvider);
+        expect(container.read(appThemeProvider), mode);
+      }
+    },
+  );
+
+  test(
+    'Appearance retains a legacy explicit choice until System is selected',
+    () async {
+      SharedPreferences.setMockInitialValues({'talkloom.dark-mode': true});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      expect(container.read(appThemeProvider), ThemeMode.dark);
+      await container.read(appThemeProvider.notifier).setMode(ThemeMode.system);
+      expect(prefs.containsKey('talkloom.dark-mode'), isFalse);
+      expect(container.read(appThemeProvider), ThemeMode.system);
+    },
+  );
 
   test('Conversation turns require explicit server evidence eligibility', () {
     final legacy = ConversationTurn.fromJson(

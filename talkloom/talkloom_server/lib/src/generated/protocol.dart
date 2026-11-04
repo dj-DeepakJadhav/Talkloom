@@ -37,6 +37,7 @@ import 'sources/import_job.dart' as _i5fsgrng;
 import 'sources/import_job_progress.dart' as _ibcc22em;
 import 'sources/link_analysis.dart' as _i9zsyima;
 import 'sources/source.dart' as _i78k1pe6;
+import 'sources/source_translation_chunk.dart' as _ii8jufog;
 import 'usage/ai_usage.dart' as _iaxrn8hs;
 export 'evidence/evidence_event.dart';
 export 'evidence/turn_evaluation.dart';
@@ -50,6 +51,7 @@ export 'sources/import_job.dart';
 export 'sources/import_job_progress.dart';
 export 'sources/link_analysis.dart';
 export 'sources/source.dart';
+export 'sources/source_translation_chunk.dart';
 export 'usage/ai_usage.dart';
 
 class Protocol extends _is.DatabaseSerializationManager {
@@ -673,6 +675,97 @@ class Protocol extends _is.DatabaseSerializationManager {
       managed: true,
     ),
     _isp.TableDefinition(
+      name: 'source_translation_chunk',
+      dartName: 'SourceTranslationChunk',
+      schema: 'public',
+      module: 'talkloom',
+      columns: [
+        _isp.ColumnDefinition(
+          name: 'id',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'serial',
+        ),
+        _isp.ColumnDefinition(
+          name: 'userId',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'sourceId',
+          columnType: _isp.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _isp.ColumnDefinition(
+          name: 'cacheKey',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'supportLanguage',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'mode',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'segments',
+          columnType: _isp.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _isp.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _isp.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _isp.IndexDefinition(
+          indexName: 'source_translation_cache_key',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'cacheKey',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _isp.IndexDefinition(
+          indexName: 'source_translation_owner_source',
+          tableSpace: null,
+          elements: [
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+            _isp.IndexElementDefinition(
+              type: _isp.IndexElementDefinitionType.column,
+              definition: 'sourceId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _isp.TableDefinition(
       name: 'sources',
       dartName: 'Source',
       schema: 'public',
@@ -1053,6 +1146,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (t == _i78k1pe6.Source) {
       return _i78k1pe6.Source.fromJson(data) as T;
     }
+    if (t == _ii8jufog.SourceTranslationChunk) {
+      return _ii8jufog.SourceTranslationChunk.fromJson(data) as T;
+    }
     if (t == _iaxrn8hs.AiUsage) {
       return _iaxrn8hs.AiUsage.fromJson(data) as T;
     }
@@ -1104,6 +1200,12 @@ class Protocol extends _is.DatabaseSerializationManager {
     }
     if (t == _is.getType<_i78k1pe6.Source?>()) {
       return (data != null ? _i78k1pe6.Source.fromJson(data) : null) as T;
+    }
+    if (t == _is.getType<_ii8jufog.SourceTranslationChunk?>()) {
+      return (data != null
+              ? _ii8jufog.SourceTranslationChunk.fromJson(data)
+              : null)
+          as T;
     }
     if (t == _is.getType<_iaxrn8hs.AiUsage?>()) {
       return (data != null ? _iaxrn8hs.AiUsage.fromJson(data) : null) as T;
@@ -1172,6 +1274,7 @@ class Protocol extends _is.DatabaseSerializationManager {
       _ibcc22em.ImportJobProgress => 'ImportJobProgress',
       _i9zsyima.LinkAnalysis => 'LinkAnalysis',
       _i78k1pe6.Source => 'Source',
+      _ii8jufog.SourceTranslationChunk => 'SourceTranslationChunk',
       _iaxrn8hs.AiUsage => 'AiUsage',
       _ => null,
     };
@@ -1213,6 +1316,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return 'LinkAnalysis';
       case _i78k1pe6.Source():
         return 'Source';
+      case _ii8jufog.SourceTranslationChunk():
+        return 'SourceTranslationChunk';
       case _iaxrn8hs.AiUsage():
         return 'AiUsage';
     }
@@ -1282,6 +1387,9 @@ class Protocol extends _is.DatabaseSerializationManager {
     if (dataClassName == 'Source') {
       return deserialize<_i78k1pe6.Source>(data['data']);
     }
+    if (dataClassName == 'SourceTranslationChunk') {
+      return deserialize<_ii8jufog.SourceTranslationChunk>(data['data']);
+    }
     if (dataClassName == 'AiUsage') {
       return deserialize<_iaxrn8hs.AiUsage>(data['data']);
     }
@@ -1342,6 +1450,8 @@ class Protocol extends _is.DatabaseSerializationManager {
         return _i9zsyima.LinkAnalysis.t;
       case _i78k1pe6.Source:
         return _i78k1pe6.Source.t;
+      case _ii8jufog.SourceTranslationChunk:
+        return _ii8jufog.SourceTranslationChunk.t;
       case _iaxrn8hs.AiUsage:
         return _iaxrn8hs.AiUsage.t;
     }

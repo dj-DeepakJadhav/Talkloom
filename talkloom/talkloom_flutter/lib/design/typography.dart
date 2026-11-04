@@ -56,6 +56,18 @@ class TlTypography extends ThemeExtension<TlTypography> {
   /// Tabular figures for counters and stats.
   final TextStyle numeric;
 
+  /// Fixed proportions for the brand lockup, separate from reading text.
+  TextStyle get wordmarkLead => titleLarge.copyWith(
+    fontSize: 23,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -1,
+  );
+  TextStyle get wordmarkTail => headline.copyWith(
+    fontSize: 27,
+    fontStyle: FontStyle.italic,
+    letterSpacing: -1.1,
+  );
+
   static TlTypography resolve(Color primary, Color secondary) {
     TextStyle jakarta(
       double size,
@@ -64,7 +76,7 @@ class TlTypography extends ThemeExtension<TlTypography> {
       double? spacing,
       double height = 1.3,
     }) => TextStyle(
-      fontFamily: 'PlusJakartaSans',
+      fontFamily: 'Inter',
       fontSize: size,
       fontWeight: weight,
       letterSpacing: spacing,
@@ -86,36 +98,38 @@ class TlTypography extends ThemeExtension<TlTypography> {
     );
 
     return TlTypography(
-      display: jakarta(
-        30,
-        FontWeight.w700,
-        primary,
-        spacing: -0.7,
-        height: 1.15,
+      display: TextStyle(
+        fontFamily: 'Newsreader',
+        fontSize: 34,
+        fontWeight: FontWeight.w500,
+        color: primary,
+        height: 1.12,
+        letterSpacing: -0.6,
       ),
-      headline: jakarta(
-        25,
-        FontWeight.w700,
-        primary,
-        spacing: -0.5,
-        height: 1.2,
+      headline: TextStyle(
+        fontFamily: 'Newsreader',
+        fontSize: 28,
+        fontWeight: FontWeight.w500,
+        color: primary,
+        height: 1.18,
+        letterSpacing: -0.35,
       ),
-      titleLarge: jakarta(20, FontWeight.w700, primary, spacing: -0.3),
-      title: jakarta(17, FontWeight.w700, primary, spacing: -0.2),
+      titleLarge: jakarta(20, FontWeight.w600, primary, spacing: -0.3),
+      title: jakarta(17, FontWeight.w600, primary, spacing: -0.2),
       body: inter(16, FontWeight.w400, secondary),
       bodyStrong: inter(16, FontWeight.w600, primary),
       bodySmall: inter(15, FontWeight.w400, secondary),
-      label: jakarta(14, FontWeight.w700, primary, spacing: 0.1, height: 1.2),
+      label: jakarta(14, FontWeight.w600, primary, height: 1.2),
       labelSmall: jakarta(
         13,
-        FontWeight.w700,
+        FontWeight.w600,
         primary,
         spacing: 0.1,
         height: 1.2,
       ),
       buttonLabel: jakarta(
         16,
-        FontWeight.w700,
+        FontWeight.w600,
         primary,
         spacing: 0.1,
         height: 1.2,

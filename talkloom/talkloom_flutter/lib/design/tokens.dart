@@ -6,6 +6,15 @@ import 'package:flutter/material.dart';
 /// "Organic Warmth" — warm sand canvas, apricot accent, eucalyptus growth.
 /// Calibrated for long reading and speaking sessions in both themes.
 abstract final class TlPalette {
+  // Warm night surfaces paired with the paper-and-espresso daytime palette.
+  static const nightCanvas = Color(0xFF1B1916);
+  static const nightSurface = Color(0xFF24211C);
+  static const nightSunken = Color(0xFF201E1A);
+  static const nightRaised = Color(0xFF2D2923);
+  static const nightBorder = Color(0xFF494238);
+  static const nightText = Color(0xFFF4EFE6);
+  static const nightSecondary = Color(0xFFC2B9AB);
+  static const nightMuted = Color(0xFFA79C8D);
   // User-selected Talkloom palette: warm paper, sand and walnut.
   static const bananaMilk = Color(0xFFFDE8BA);
   static const zombie = Color(0xFFE3CCA1);

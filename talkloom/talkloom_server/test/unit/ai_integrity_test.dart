@@ -180,7 +180,13 @@ void main() {
       'treats a null model response as a repairable validation failure',
       () async {
         final client = _QueueClient([
-          _metaResponse(jsonEncode({'choices': [{'message': {}}]})),
+          _metaResponse(
+            jsonEncode({
+              'choices': [
+                {'message': {}},
+              ],
+            }),
+          ),
           _metaResponse(jsonEncode(_validLesson)),
         ]);
         final service = DualLessonCompilerService(
@@ -373,8 +379,9 @@ final _validLesson = <String, dynamic>{
   'grammar': [
     {
       'concept': 'Present tense',
-      'sourceSentence': 'Ich lerne Deutsch.',
-      'explanation': 'The verb form changes with the subject.',
+      'sourceSentence': 'Ich lerne Deutsch. Ich spreche Deutsch.',
+      'explanation':
+          'The verb ending changes with the subject, so ich takes the ending e, as in Ich lerne Deutsch.',
     },
   ],
   'activities': [

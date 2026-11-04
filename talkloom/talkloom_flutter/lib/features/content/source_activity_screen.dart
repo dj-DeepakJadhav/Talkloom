@@ -4,12 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:talkloom_client/talkloom_client.dart' show Source;
 import '../../app/providers.dart';
 import '../../design/theme.dart';
-import '../../design/components/tl_sticker.dart';
 import '../../domain/lesson_content.dart';
 import '../../domain/practice_engine.dart';
-import '../practice/exercise_widgets.dart';
 import '../practice/practice_launcher.dart';
 import 'content_widgets.dart';
+import 'learning_components.dart';
 
 /// Resolves the URL's source independently of the last in-memory activity.
 class SourceActivityScope extends ConsumerWidget {
@@ -123,49 +122,7 @@ class _VocabularyActivityScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 210,
-                        height: 210,
-                        decoration: BoxDecoration(
-                          color: context.colors.surfaceSunken,
-                          borderRadius: BorderRadius.circular(34),
-                        ),
-                        child: TlSticker(
-                          key: ValueKey(word.id),
-                          kind: TlStickerKind.book,
-                          size: 210,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              word.display,
-                              textAlign: TextAlign.center,
-                              style: context.type.headline,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          SpeakerButton(text: word.display, large: true),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(word.meaning, style: context.type.body),
-                      if (word.sourceContext.isNotEmpty) ...[
-                        const SizedBox(height: 18),
-                        Text(
-                          '“${word.sourceContext}”',
-                          textAlign: TextAlign.center,
-                          style: context.type.bodySmall,
-                        ),
-                      ],
-                    ],
-                  ),
+                  VocabularyPresentation(word: word),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -242,28 +199,11 @@ class GrammarActivityScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: context.colors.surfaceSunken,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: const TlSticker(
-                        kind: TlStickerKind.grammar,
-                        size: 150,
-                        animate: false,
-                      ),
+                    GrammarExplanation(
+                      concept: rule.concept,
+                      explanation: rule.explanation,
+                      sentence: rule.sourceSentence,
                     ),
-                    const SizedBox(height: 18),
-                    Text(rule.concept, style: context.type.headline),
-                    if (rule.sourceSentence.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(rule.sourceSentence, style: context.type.title),
-                    ],
-                    if (rule.explanation.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Text(rule.explanation, style: context.type.bodySmall),
-                    ],
                     const SizedBox(height: 18),
                     FilledButton(
                       onPressed: () {

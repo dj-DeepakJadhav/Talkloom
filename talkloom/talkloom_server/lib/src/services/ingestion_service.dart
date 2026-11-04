@@ -8,6 +8,7 @@ import 'package:serverpod/serverpod.dart';
 import 'agent_reach_worker_adapter.dart';
 import 'agent_reach_youtube_resolver.dart';
 import 'embedded_lesson_resolver.dart';
+import 'meta_speech_service.dart';
 import '../generated/protocol.dart' show ImportException;
 import '../sources/safe_url_policy.dart';
 
@@ -18,6 +19,15 @@ class IngestionService {
   final bool _ownsClient;
   final AgentReachWorkerAdapter _agentReachWorker;
   final AgentReachYouTubeResolver _agentReachYouTubeResolver;
+
+  /// Returns mono 16 kHz WAV audio for a video, or null when unavailable.
+  final Future<Uint8List?> Function(String url) _audioDownloader;
+
+  /// Returns a transcript for WAV audio, or null when it cannot be produced.
+  final Future<String?> Function(Uint8List wav, String apiKey)
+  _audioTranscriber;
+  static const _audioFallbackSeconds = 420;
+  static const _minAudioTranscriptChars = 60;
   static const _maxWebResponseBytes = 2 * 1024 * 1024;
   static const _maxSocialResponseBytes = 1024 * 1024;
   static const _maxRedirects = 4;
@@ -30,7 +40,11 @@ class IngestionService {
     AgentReachWorkerAdapter? agentReachWorker,
     AgentReachYouTubeResolver? agentReachYouTubeResolver,
     Duration requestTimeout = const Duration(seconds: 8),
+    Future<Uint8List?> Function(String url)? audioDownloader,
+    Future<String?> Function(Uint8List wav, String apiKey)? audioTranscriber,
   }) : _hostResolver = hostResolver ?? InternetAddress.lookup,
+       _audioDownloader = audioDownloader ?? _downloadYouTubeAudio,
+       _audioTranscriber = audioTranscriber ?? _transcribeWithMeta,
        _agentReachWorker = agentReachWorker ?? AgentReachWorkerAdapter(),
        _agentReachYouTubeResolver =
            agentReachYouTubeResolver ?? AgentReachYouTubeResolver(),
@@ -99,6 +113,7 @@ class IngestionService {
     String url, {
     String? userScopeId,
     Session? session,
+    String metaApiKey = '',
   }) async {
     final uri = SafeUrlPolicy.parsePublicWebUrl(url);
     await SafeUrlPolicy.resolvePublicAddresses(
@@ -108,7 +123,11 @@ class IngestionService {
     );
 
     if (_isYoutubeHost(uri.host)) {
-      return await _extractYouTubeContent(url, userScopeId: userScopeId);
+      return await _extractYouTubeContent(
+        url,
+        userScopeId: userScopeId,
+        metaApiKey: metaApiKey,
+      );
     }
 
     // Embedded lesson data first: JS-rendered lesson sites show readers
@@ -294,6 +313,7 @@ class IngestionService {
   Future<String> _extractYouTubeContent(
     String url, {
     String? userScopeId,
+    String metaApiKey = '',
   }) async {
     try {
       final resolved = await _agentReachWorker.resolveYouTubeTranscript(
@@ -416,10 +436,87 @@ class IngestionService {
       }
     } catch (_) {}
 
+    // Last resort: no usable captions. Transcribe the spoken audio with Muse
+    // Voice. Needs a Meta key plus yt-dlp and ffmpeg on the server; without
+    // them this stays null and the learner gets the guidance below.
+    if (metaApiKey.isNotEmpty) {
+      try {
+        final wav = await _audioDownloader(url);
+        if (wav != null && wav.isNotEmpty) {
+          final transcript = (await _audioTranscriber(wav, metaApiKey))?.trim();
+          if (transcript != null &&
+              transcript.length >= _minAudioTranscriptChars) {
+            return '[YouTube Video: $videoTitle | audio-transcription: '
+                'spoken German transcribed by Muse Voice from the first '
+                '${_audioFallbackSeconds ~/ 60} minutes; words may be '
+                'misheard]\n$transcript';
+          }
+        }
+      } catch (_) {
+        // Fall through to the actionable error below.
+      }
+    }
+
     throw StateError(
       'Talkloom could not retrieve captions for "$videoTitle". '
       'Try again, choose a video with captions, or paste its transcript.',
     );
+  }
+
+  /// Downloads the first minutes of a video's audio as mono 16 kHz WAV, the
+  /// format Muse Voice accepts. Returns null when yt-dlp/ffmpeg are missing or
+  /// the download fails or times out.
+  static Future<Uint8List?> _downloadYouTubeAudio(String url) async {
+    final directory = await Directory.systemTemp.createTemp('talkloom-audio-');
+    Process? process;
+    try {
+      process = await Process.start('yt-dlp', [
+        '--no-warnings',
+        '--no-progress',
+        '--no-playlist',
+        '-f',
+        'bestaudio',
+        '-x',
+        '--audio-format',
+        'wav',
+        '--postprocessor-args',
+        'ffmpeg:-ac 1 -ar 16000 -t $_audioFallbackSeconds',
+        '-o',
+        '${directory.path}${Platform.pathSeparator}audio.%(ext)s',
+        url,
+      ]);
+      // Drain output so a full pipe cannot stall the process.
+      process.stdout.drain<void>().ignore();
+      process.stderr.drain<void>().ignore();
+      final exitCode = await process.exitCode.timeout(
+        const Duration(seconds: 150),
+      );
+      if (exitCode != 0) return null;
+      final file = File('${directory.path}${Platform.pathSeparator}audio.wav');
+      if (!await file.exists()) return null;
+      final bytes = await file.readAsBytes();
+      // Muse Voice accepts 1 KB to 15 MB.
+      return bytes.length < 1000 || bytes.length > 15 * 1024 * 1024
+          ? null
+          : bytes;
+    } catch (_) {
+      process?.kill();
+      return null;
+    } finally {
+      await directory.delete(recursive: true).catchError((_) => directory);
+    }
+  }
+
+  static Future<String?> _transcribeWithMeta(
+    Uint8List wav,
+    String apiKey,
+  ) async {
+    final service = MetaSpeechService(apiKey: apiKey);
+    try {
+      return await service.transcribe(base64Encode(wav), language: 'de');
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Extracts rich social media context through the existing reader fallback.

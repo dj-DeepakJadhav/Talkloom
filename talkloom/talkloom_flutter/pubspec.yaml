@@ -58,6 +58,8 @@ dependencies:
   audioplayers: ^6.8.1
   gpt_markdown: ^1.4.0
   google_mobile_ads: ^9.2.0
+  genui: 0.10.4
+  json_schema_builder: 0.1.7
 dev_dependencies:
   # Used for agents to drive the app through the Dart MCP
   flutter_driver:
@@ -93,6 +95,7 @@ flutter:
   # https://flutter.dev/assets-and-images/#from-packages
   assets:
     - assets/config.json
+    - assets/brand/
     - assets/illustrations/
     - assets/licenses/
 
