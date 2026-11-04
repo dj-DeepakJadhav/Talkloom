@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../generated/future_calls.dart';
-import '../usage/ai_quota_service.dart';
 import 'import_job_runner.dart';
 import 'lesson_import_service.dart';
 import 'link_classifier.dart';
@@ -52,7 +51,6 @@ class IngestionEndpoint extends Endpoint {
       targetLanguage: targetLanguage,
     );
     _checkNoProfilePage(type: type, url: url);
-    await AiQuotaService.consume(session, 'import');
     return _importService.importSource(
       session,
       userId: _requireUserId(session),
@@ -84,7 +82,6 @@ class IngestionEndpoint extends Endpoint {
       targetLanguage: targetLanguage,
     );
     _checkNoProfilePage(type: type, url: url);
-    await AiQuotaService.consume(session, 'import');
     final userId = _requireUserId(session);
     if (!_importTypes.contains(type)) {
       throw ImportException(
@@ -276,7 +273,6 @@ class IngestionEndpoint extends Endpoint {
   /// writes the improved lesson back to the shared analysis, so future
   /// importers of the same material benefit too.
   Future<Lesson> refreshLesson(Session session, int sourceId) async {
-    await AiQuotaService.consume(session, 'import');
     final userId = _requireUserId(session);
     return _importService.refreshLesson(
       session,

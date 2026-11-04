@@ -5,6 +5,7 @@ import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import '../services/dual_ai_compiler_service.dart';
 import '../services/ingestion_service.dart';
+import '../usage/ai_quota_service.dart';
 import 'link_classifier.dart';
 import 'safe_url_policy.dart';
 import 'content_hygiene_service.dart';
@@ -423,6 +424,9 @@ class LessonImportService {
 
       final compiler = DualLessonCompilerService(metaApiKey: metaApiKey);
 
+      // Quota burns here, where the paid model call starts — never for
+      // failed fetches, guard rejections or validation errors above.
+      await AiQuotaService.consume(session, 'import');
       lessonDsl = await compiler.compileLesson(
         sourceTitle: effectiveTitle,
         rawText: textContent,
@@ -534,6 +538,8 @@ class LessonImportService {
       where: (t) => t.sourceId.equals(source.id!) & t.userId.equals(userId),
     );
     final supportLanguage = owned?.supportLanguage ?? 'en';
+    // Quota burns here, where the paid model call starts.
+    await AiQuotaService.consume(session, 'import');
     final lessonDsl = await DualLessonCompilerService(metaApiKey: metaApiKey)
         .compileLesson(
           sourceTitle: source.title,

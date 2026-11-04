@@ -47,7 +47,6 @@ class PedagogicalEndpoint extends Endpoint {
     double responseLatencySec, {
     int? lessonId,
   }) async {
-    await AiQuotaService.consume(session, 'turn');
     final userId = _requireUserId(session);
     Lesson? lesson;
     if (lessonId != null) {
@@ -72,6 +71,9 @@ class PedagogicalEndpoint extends Endpoint {
         'The conversation contains too much history or too many targets.',
       );
     }
+    // Quota burns here, where the paid model call starts — never for
+    // rejected or unowned requests above.
+    await AiQuotaService.consume(session, 'turn');
     final metaApiKey = session.serverpod.getPassword('metaApiKey') ?? '';
 
     final agent = DualPedagogicalAgentService(metaApiKey: metaApiKey);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
@@ -11,8 +13,21 @@ import '../generated/protocol.dart';
 /// reset at UTC midnight. Over-quota requests fail with a learner-safe
 /// [ImportException] (`quota_exceeded`) that the Flutter app maps to an
 /// upgrade/wait message — never a bare 500.
+///
+/// Tuned without code changes through environment variables (Render
+/// dashboard → Environment → save → restart; locally, export before
+/// `serverpod start`):
+///
+/// * `AI_QUOTA_ENABLED=false` — master switch off (no limits at all).
+///   Default `true`.
+/// * `AI_QUOTA_GUEST_IMPORTS`, `AI_QUOTA_GUEST_TURNS`,
+///   `AI_QUOTA_GUEST_TRANSLATIONS`, `AI_QUOTA_GUEST_TRANSCRIPTIONS`,
+///   `AI_QUOTA_GUEST_ILLUSTRATIONS` — guest daily caps.
+/// * `AI_QUOTA_REGISTERED_*` — same keys for registered learners.
+/// * `0` disables that kind entirely. Unset keys keep the built-in
+///   defaults below.
 class AiQuotaService {
-  static const guestLimits = <String, int>{
+  static const _guestDefaults = <String, int>{
     'import': 3,
     'turn': 30,
     'translation': 30,
@@ -20,13 +35,38 @@ class AiQuotaService {
     'illustration': 5,
   };
 
-  static const registeredLimits = <String, int>{
+  static const _registeredDefaults = <String, int>{
     'import': 10,
     'turn': 100,
     'translation': 100,
     'transcription': 30,
     'illustration': 20,
   };
+
+  /// Master switch. Read live on every call; Render picks up changed env
+  /// values on restart.
+  static bool get enabled {
+    final value = (Platform.environment['AI_QUOTA_ENABLED'] ?? 'true')
+        .trim()
+        .toLowerCase();
+    return value != 'false' && value != '0' && value != 'no' && value != 'off';
+  }
+
+  /// Effective caps for a tier, with env overrides applied.
+  static Map<String, int> limitsFor({required bool guest}) {
+    final tier = guest ? 'GUEST' : 'REGISTERED';
+    final defaults = guest ? _guestDefaults : _registeredDefaults;
+    return {
+      for (final entry in defaults.entries)
+        entry.key: _envCap(tier, entry.key, entry.value),
+    };
+  }
+
+  static int _envCap(String tier, String kind, int fallback) {
+    final raw = Platform.environment['AI_QUOTA_${tier}_${kind.toUpperCase()}'];
+    if (raw == null) return fallback;
+    return int.tryParse(raw.trim()) ?? fallback;
+  }
 
   /// True for anonymous-only identities; false once an email account exists.
   static Future<bool> isGuest(Session session) async {
@@ -46,16 +86,19 @@ class AiQuotaService {
       DateTime.utc(now.year, now.month, now.day);
 
   /// Fails with `quota_exceeded` when the daily allowance for [kind] is
-  /// spent, otherwise bumps the counter. Kinds: import, turn,
-  /// transcription, illustration, video.
+  /// spent, otherwise bumps the counter. Kinds: import, turn, translation,
+  /// transcription, illustration, video. No-op when the master switch is
+  /// off. Call this where AI credit actually burns, not where requests
+  /// queue — failed fetches must never eat the allowance.
   static Future<void> consume(Session session, String kind) async {
+    if (!enabled) return;
     final userIdentifier = session.authenticated?.userIdentifier;
     if (userIdentifier == null) {
       throw StateError('Sign in to use AI features.');
     }
     final userId = userIdentifier.toString();
     final guest = await isGuest(session);
-    final limits = guest ? guestLimits : registeredLimits;
+    final limits = limitsFor(guest: guest);
     final cap = limits[kind];
     if (cap == null) throw ArgumentError('Unknown AI usage kind: $kind');
 
