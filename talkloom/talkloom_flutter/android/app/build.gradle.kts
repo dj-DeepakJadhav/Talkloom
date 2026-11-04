@@ -35,6 +35,12 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // R8 currently breaks WorkManager startup (pulled in by
+            // google_mobile_ads) with "Failed to create an instance of
+            // WorkDatabase", crashing release builds on launch. Keep it off
+            // until targeted keep rules land. TODO: re-enable with rules.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
