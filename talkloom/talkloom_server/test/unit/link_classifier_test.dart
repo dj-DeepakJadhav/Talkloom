@@ -53,5 +53,39 @@ void main() {
         LinkPlatform.web,
       );
     });
+
+    test('spots profile pages that hold no single lesson', () {
+      expect(
+        LinkClassifier.profileAccount('https://www.instagram.com/nicosweg/'),
+        'nicosweg',
+      );
+      expect(
+        LinkClassifier.profileAccount('https://www.tiktok.com/@nicosweg'),
+        'nicosweg',
+      );
+      expect(
+        LinkClassifier.profileAccount('https://x.com/nicosweg'),
+        'nicosweg',
+      );
+    });
+
+    test('does not flag reels and posts as profiles', () {
+      expect(
+        LinkClassifier.profileAccount(
+          'https://www.instagram.com/reel/ABC123/?igsh=xyz',
+        ),
+        isNull,
+      );
+      expect(
+        LinkClassifier.profileAccount('https://www.instagram.com/p/ABC123/'),
+        isNull,
+      );
+      expect(
+        LinkClassifier.profileAccount(
+          'https://www.tiktok.com/@nicosweg/video/123',
+        ),
+        isNull,
+      );
+    });
   });
 }

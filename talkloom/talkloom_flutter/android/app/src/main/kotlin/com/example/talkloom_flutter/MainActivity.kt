@@ -8,6 +8,8 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private var pendingSharedText: String? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // Lets the app send users to its own settings page to re-grant the
@@ -29,5 +31,32 @@ class MainActivity : FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        // Share-target intake: Instagram, YouTube, browsers, etc. send
+        // ACTION_SEND with text/plain here. Each share is delivered once.
+        runCatching { collectSharedText(intent) }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "talkloom/share")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "takeSharedText") {
+                    val text = pendingSharedText
+                    pendingSharedText = null
+                    result.success(text)
+                } else {
+                    result.notImplemented()
+                }
+            }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        runCatching { collectSharedText(intent) }
+    }
+
+    private fun collectSharedText(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND) return
+        if (intent.type != "text/plain") return
+        val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+            ?: intent.getStringExtra(Intent.EXTRA_TEXT)
+        if (!text.isNullOrBlank()) pendingSharedText = text
     }
 }

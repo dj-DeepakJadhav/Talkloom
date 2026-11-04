@@ -5,6 +5,7 @@ import '../generated/future_calls.dart';
 import '../usage/ai_quota_service.dart';
 import 'import_job_runner.dart';
 import 'lesson_import_service.dart';
+import 'link_classifier.dart';
 import 'target_language_guard.dart';
 
 class IngestionEndpoint extends Endpoint {
@@ -50,6 +51,7 @@ class IngestionEndpoint extends Endpoint {
       rawContent: rawContent,
       targetLanguage: targetLanguage,
     );
+    _checkNoProfilePage(type: type, url: url);
     await AiQuotaService.consume(session, 'import');
     return _importService.importSource(
       session,
@@ -81,6 +83,7 @@ class IngestionEndpoint extends Endpoint {
       rawContent: rawContent,
       targetLanguage: targetLanguage,
     );
+    _checkNoProfilePage(type: type, url: url);
     await AiQuotaService.consume(session, 'import');
     final userId = _requireUserId(session);
     if (!_importTypes.contains(type)) {
@@ -195,6 +198,23 @@ class IngestionEndpoint extends Endpoint {
       if (ImportStage.isTerminal(update.stage)) return;
       if (DateTime.now().isAfter(deadline)) return;
     }
+  }
+
+  /// Profile/account pages hold no single lesson. Fail fast with guidance
+  /// instead of burning quota and returning a login wall as "content".
+  static void _checkNoProfilePage({
+    required String type,
+    required String? url,
+  }) {
+    if (type != 'url' || url == null || url.trim().isEmpty) return;
+    final account = LinkClassifier.profileAccount(url.trim());
+    if (account == null) return;
+    throw ImportException(
+      code: 'unsupported_link',
+      message:
+          'This is @$account\u2019s profile page, not a single post. '
+          'Open the reel or post you want to learn from and share that link instead.',
+    );
   }
 
   /// Upfront language check for pasted text: rejects wrong-language content

@@ -99,6 +99,50 @@ abstract final class LinkClassifier {
     return LinkClassification(platform: platform, creator: creator);
   }
 
+  /// Profile/account page rather than a single post: `instagram.com/<name>`,
+  /// `tiktok.com/@<name>`, `x.com/<name>`, `facebook.com/<name>`. Profiles hold
+  /// no single lesson — the learner must share a specific reel/post.
+  /// Returns the account name when [url] is such a page, else null.
+  static String? profileAccount(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return null;
+    final platform = platformOf(uri);
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    switch (platform) {
+      case LinkPlatform.instagram:
+        const reserved = {
+          'p',
+          'reel',
+          'reels',
+          'tv',
+          'stories',
+          'share',
+          'i',
+          'explore',
+          'direct',
+          'accounts',
+          'about',
+        };
+        if (segments.length == 1 && !reserved.contains(segments.first)) {
+          return segments.first;
+        }
+      case LinkPlatform.tiktok:
+        if (segments.length == 1 && segments.first.startsWith('@')) {
+          return segments.first.substring(1);
+        }
+      case LinkPlatform.x:
+        if (segments.length == 1) return segments.first;
+      case LinkPlatform.facebook:
+        const reserved = {'watch', 'marketplace', 'groups', 'events', 'pages'};
+        if (segments.length == 1 && !reserved.contains(segments.first)) {
+          return segments.first;
+        }
+      default:
+        break;
+    }
+    return null;
+  }
+
   static String? _youTubeAuthor(String? transcript) {
     if (transcript == null) return null;
     final header = RegExp(
