@@ -7,6 +7,7 @@ import 'package:http/io_client.dart';
 import 'package:serverpod/serverpod.dart';
 import 'agent_reach_worker_adapter.dart';
 import 'agent_reach_youtube_resolver.dart';
+import 'dw_learn_german.dart';
 import 'embedded_lesson_resolver.dart';
 import 'meta_speech_service.dart';
 import '../generated/protocol.dart' show ImportException;
@@ -178,6 +179,13 @@ class IngestionService {
       }
     } catch (_) {
       // Fall through to the readers below.
+    }
+
+    // Google Docs / Sheets links: public files export as plain text/CSV.
+    // Private files return a login page, which becomes guidance, never a
+    // lesson.
+    if (uri.host == 'docs.google.com' || uri.host == 'drive.google.com') {
+      return await _extractGoogleDoc(uri);
     }
 
     if (_isSocialHost(uri.host)) {
@@ -543,6 +551,56 @@ class IngestionService {
     }
   }
 
+  /// Public Google Docs/Sheets via their export endpoints. Only files
+  /// shared as "anyone with the link" export; everything else 401s or
+  /// returns the sign-in page and becomes learner guidance.
+  Future<String> _extractGoogleDoc(Uri uri) async {
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    // /document/d/{id}/... or /spreadsheets/d/{id}/...
+    String? kind;
+    String? id;
+    for (var i = 0; i + 2 < segments.length; i++) {
+      if (segments[i + 1] == 'd' &&
+          (segments[i] == 'document' || segments[i] == 'spreadsheets')) {
+        kind = segments[i];
+        id = segments[i + 2];
+        break;
+      }
+    }
+    if (kind == null || id == null) {
+      throw ImportException(
+        code: 'unsupported_link',
+        message:
+            'This Google Drive link is not a document Talkloom can open. '
+            'Share the file itself, or paste its text.',
+      );
+    }
+    final format = kind == 'spreadsheets' ? 'csv' : 'txt';
+    final exportUri = Uri.https(
+      'docs.google.com',
+      '/$kind/d/$id/export',
+      {'format': format},
+    );
+    final response = await _safeGet(
+      exportUri,
+      headers: const {'Accept': 'text/plain, text/csv, */*'},
+      maxBytes: _maxWebResponseBytes,
+    );
+    final body = response.body.trim();
+    final looksLikeLogin =
+        body.toLowerCase().contains('sign in') &&
+        body.toLowerCase().contains('google');
+    if (response.statusCode != 200 || body.length <= 60 || looksLikeLogin) {
+      throw ImportException(
+        code: 'unreadable',
+        message:
+            'Talkloom could not open this Google file. Set sharing to '
+            '"Anyone with the link", or download it and upload the file.',
+      );
+    }
+    return body.length > 8000 ? '${body.substring(0, 8000)}\n…' : body;
+  }
+
   /// Extracts rich social media context through the existing reader fallback.
   ///
   /// Agentic order: (1) page readers (AgentReach, then Jina); (2) verify the
@@ -847,6 +905,36 @@ class IngestionService {
 
   /// Extracts text from document/photo images using Meta multimodal AI
   /// (Muse Spark vision via the Meta Model API) or Base64 decoding.
+  /// Runs one of the stdlib extractor scripts (PDF/DOCX) over [bytes].
+  /// Returns null on any failure; callers turn that into guidance.
+  Future<String?> _extractViaScript(String script, Uint8List bytes) async {
+    Process? process;
+    try {
+      final localPython = Platform.isWindows
+          ? '.venv/Scripts/python.exe'
+          : '.venv/bin/python';
+      final python =
+          Platform.environment['TALKLOOM_PYTHON_EXECUTABLE'] ??
+          (await File(localPython).exists() ? localPython : 'python3');
+      process = await Process.start(python, ['scripts/$script']);
+      final output = process.stdout.transform(utf8.decoder).join();
+      final errors = process.stderr.drain<void>();
+      process.stdin.add(bytes);
+      await process.stdin.close();
+      final code = await process.exitCode.timeout(
+        const Duration(seconds: 30),
+      );
+      final text = await output.timeout(const Duration(seconds: 2));
+      await errors;
+      if (code == 0 && text.trim().isNotEmpty) return text.trim();
+      return null;
+    } catch (_) {
+      return null;
+    } finally {
+      process?.kill();
+    }
+  }
+
   Future<String> extractTextFromMedia({
     required String base64Data,
     required String mimeType,
@@ -857,39 +945,56 @@ class IngestionService {
       final payload = base64Data.contains(',')
           ? base64Data.substring(base64Data.indexOf(',') + 1)
           : base64Data;
-      Process? process;
-      try {
-        final bytes = base64Decode(payload);
-        if (bytes.length > 8 * 1024 * 1024) {
-          throw const FormatException('PDF exceeds limit');
-        }
-        final localPython = Platform.isWindows
-            ? '.venv/Scripts/python.exe'
-            : '.venv/bin/python';
-        final python =
-            Platform.environment['TALKLOOM_PYTHON_EXECUTABLE'] ??
-            (await File(localPython).exists() ? localPython : 'python3');
-        process = await Process.start(python, ['scripts/extract_pdf.py']);
-        final output = process.stdout.transform(utf8.decoder).join();
-        final errors = process.stderr.drain<void>();
-        process.stdin.add(bytes);
-        await process.stdin.close();
-        final code = await process.exitCode.timeout(
-          const Duration(seconds: 30),
+      final bytes = base64Decode(payload);
+      if (bytes.length > 8 * 1024 * 1024) {
+        throw ImportException(
+          code: 'unreadable',
+          message: 'This PDF is too large. Try a smaller file.',
         );
-        final text = await output.timeout(const Duration(seconds: 2));
-        await errors;
-        if (code == 0 && text.trim().isNotEmpty) return text.trim();
-      } catch (_) {
-        // Return a safe import error below; never compile binary PDF syntax.
-      } finally {
-        process?.kill();
       }
+      final text = await _extractViaScript('extract_pdf.py', bytes);
+      if (text != null) return text;
       throw ImportException(
         code: 'unreadable',
         message:
             'Could not read this PDF. Use a PDF with selectable text, '
             'or share a clear image of the page.',
+      );
+    }
+    const docxMime =
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (mimeType == docxMime || mimeType == 'application/msword') {
+      final payload = base64Data.contains(',')
+          ? base64Data.substring(base64Data.indexOf(',') + 1)
+          : base64Data;
+      final bytes = base64Decode(payload);
+      if (bytes.length > 8 * 1024 * 1024) {
+        throw ImportException(
+          code: 'unreadable',
+          message: 'This document is too large. Try a smaller file.',
+        );
+      }
+      final text = await _extractViaScript('extract_docx.py', bytes);
+      if (text != null) return text;
+      throw ImportException(
+        code: 'unreadable',
+        message: mimeType == 'application/msword'
+            ? 'Talkloom cannot read old .doc files. Save it as .docx or '
+                  'PDF and try again.'
+            : 'Could not read this document. Try saving it as PDF, '
+                  'or paste the text instead.',
+      );
+    }
+    if (mimeType == 'text/html') {
+      final payload = base64Data.contains(',')
+          ? base64Data.substring(base64Data.indexOf(',') + 1)
+          : base64Data;
+      final html = utf8.decode(base64Decode(payload), allowMalformed: true);
+      final text = DwLearnGerman.stripHtml(html);
+      if (text.length > 40) return text;
+      throw ImportException(
+        code: 'unreadable',
+        message: 'Could not read this HTML file. Paste the text instead.',
       );
     }
     if (metaApiKey.isNotEmpty && mimeType.startsWith('image/')) {

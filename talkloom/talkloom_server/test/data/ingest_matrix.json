@@ -52,6 +52,22 @@
     "expect": "ok"
   },
   {
+    "name": "upload-german-docx",
+    "type": "document",
+    "file": "test/data/fixtures/german-note.docx",
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "targetLanguage": "de",
+    "expect": "ok"
+  },
+  {
+    "name": "upload-german-pdf",
+    "type": "document",
+    "file": "test/data/fixtures/german-note.pdf",
+    "mime": "application/pdf",
+    "targetLanguage": "de",
+    "expect": "ok"
+  },
+  {
     "name": "scan-german-tenses-cheatsheet",
     "type": "image",
     "file": "test/data/fixtures/cheatsheet-tenses.jpg",

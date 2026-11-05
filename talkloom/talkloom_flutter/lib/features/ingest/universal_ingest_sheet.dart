@@ -96,6 +96,26 @@ class _UniversalIngestSheetState extends ConsumerState<UniversalIngestSheet> {
     super.dispose();
   }
 
+  /// Mime type for an uploaded file name, by extension. The server picks
+  /// its extractor from this, so it must be truthful.
+  String _mimeForName(String? name) {
+    final ext = (name ?? '').split('.').last.toLowerCase();
+    return switch (ext) {
+      'pdf' => 'application/pdf',
+      'docx' =>
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'doc' => 'application/msword',
+      'txt' => 'text/plain',
+      'md' => 'text/markdown',
+      'csv' => 'text/csv',
+      'html' || 'htm' => 'text/html',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'heic' => 'image/heic',
+      _ => 'image/jpeg',
+    };
+  }
+
   Future<void> _import({bool practiceLater = false}) async {
     if (ref.read(importControllerProvider).isLoading) return;
     if (_mode.isMedia && _mediaBytes == null) {
@@ -136,7 +156,11 @@ class _UniversalIngestSheetState extends ConsumerState<UniversalIngestSheet> {
         : _mode.isMedia
         ? await importer.importMedia(
             title: title.isEmpty ? (_mediaName ?? 'Your image') : title,
-            base64Content: base64Encode(_mediaBytes!),
+            // Data URI carries the real mime type so the server routes
+            // PDF/DOCX/text/images to the right extractor instead of
+            // guessing image/jpeg for everything.
+            base64Content:
+                'data:${_mimeForName(_mediaName)};base64,${base64Encode(_mediaBytes!)}',
             type: _mode == _IngestMode.camera ? 'image' : 'document',
           )
         : await importer.importUrl(title: title, url: value);
@@ -265,7 +289,15 @@ class _UniversalIngestSheetState extends ConsumerState<UniversalIngestSheet> {
   Future<void> _chooseDocument() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'doc', 'docx', 'txt', 'md'],
+      allowedExtensions: const [
+        'pdf',
+        'docx',
+        'txt',
+        'md',
+        'csv',
+        'html',
+        'htm',
+      ],
     );
     final file = result.isEmpty ? null : result.single;
     if (file == null) return;
