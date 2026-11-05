@@ -86,7 +86,7 @@ class ImportJobRunner {
       stderr.writeln(
         'Import job $jobId failed (stage ${job!.stage}): '
         '${error.runtimeType}'
-        '${detail.isEmpty ? '' : ': ${detail.length > 300 ? detail.substring(0, 300) : detail}'}',
+        '${detail.isEmpty ? '' : ': ${detail.length > 900 ? detail.substring(0, 900) : detail}'}',
       );
       final (code, message) = _explain(
         error,
