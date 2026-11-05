@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Turn the German content you save into something you can speak about.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Talkloom">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FAF6EF">
+  <!-- AdSense loader for the web banner (lib/features/ads/ad_banner_web.dart).
+       Replace ca-pub-XXXX with your publisher ID and approve this domain in
+       your AdSense account. Leave as-is while AdConfig.adsEnabled is false. -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXX"
+     crossorigin="anonymous"></script>
+  <title>Talkloom</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script>
+    // Talkloom Native Web Speech API Bridge (STT and TTS)
+    window.talkloomVoice = {
+      recognition: null,
+      isListening: false,
+      lastError: null,
+      speechCallback: null,
+      
+      startListening: function(langCode) {
+        var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+          console.warn("[talkloomVoice] SpeechRecognition not supported in this browser.");
+          this.lastError = 'unsupported';
+          return false;
+        }
+        this.lastError = null;
+        try {
+          if (this.recognition) {
+            this.recognition.abort();
+          }
+          var rec = new SpeechRec();
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.lang = langCode || 'de-DE';
+          
+          var self = this;
+          rec.onresult = function(event) {
+            var fullTranscript = '';
+            for (var i = 0; i < event.results.length; ++i) {
+              fullTranscript += event.results[i][0].transcript;
+            }
+            if (self.speechCallback) {
+              self.speechCallback(fullTranscript);
+            }
+            // Also dispatch custom DOM event for listeners
+            window.dispatchEvent(new CustomEvent('talkloom_speech_result', { detail: fullTranscript }));
+          };
+          
+          rec.onerror = function(err) {
+            console.warn('[talkloomVoice] Speech recognition error:', err);
+            self.lastError = (err && err.error) || 'error';
+            self.isListening = false;
+          };
+          
+          rec.onend = function() {
+            self.isListening = false;
+          };
+          
+          rec.start();
+          this.recognition = rec;
+          this.isListening = true;
+          return true;
+        } catch (e) {
+          console.error('[talkloomVoice] Failed to start recognition:', e);
+          this.lastError = 'error';
+          return false;
+        }
+      },
+      
+      stopListening: function() {
+        if (this.recognition) {
+          try {
+            this.recognition.stop();
+          } catch(e) {}
+          this.isListening = false;
+        }
+      }
+    };
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
+
