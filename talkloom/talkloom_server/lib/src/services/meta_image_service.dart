@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
+import 'meta_models.dart';
 
 /// Vocabulary and scene illustration via the Meta Model API (Muse Image).
 ///
@@ -14,7 +15,7 @@ class MetaImageService {
     http.Client? client,
     required this.apiKey,
     this.model = 'muse-image-1.0',
-    this.baseUrl = 'https://api.meta.ai/v1',
+    this.baseUrl = kMetaBaseUrl,
     Directory? cacheDirectory,
   }) : _client = client ?? http.Client(),
        _cacheDir =

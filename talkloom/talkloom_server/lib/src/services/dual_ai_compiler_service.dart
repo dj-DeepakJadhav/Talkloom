@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'plain_language_policy.dart';
+import 'meta_models.dart';
 
 class DualLessonCompilerService {
   final String metaApiKey;
@@ -11,8 +12,8 @@ class DualLessonCompilerService {
 
   DualLessonCompilerService({
     this.metaApiKey = '',
-    this.metaModel = 'muse-spark-1.3',
-    this.metaBaseUrl = 'https://api.meta.ai/v1',
+    this.metaModel = kMetaTextModel,
+    this.metaBaseUrl = kMetaBaseUrl,
     http.Client? client,
   }) : _client = client ?? http.Client();
 
@@ -527,7 +528,11 @@ Compile the lesson now.''',
       }
       return jsonDecode(content) as Map<String, dynamic>;
     }
-    throw StateError('Meta Model API returned status ${response.statusCode}');
+    final body = response.body.replaceAll(RegExp(r'\s+'), ' ');
+    throw StateError(
+      'Meta Model API returned status ${response.statusCode}: '
+      '${body.length > 200 ? body.substring(0, 200) : body}',
+    );
   }
 }
 

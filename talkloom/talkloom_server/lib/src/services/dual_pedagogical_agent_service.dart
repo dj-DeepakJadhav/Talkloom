@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'plain_language_policy.dart';
+import 'meta_models.dart';
 
 class DualPedagogicalAgentService {
   final String metaApiKey;
@@ -10,8 +11,8 @@ class DualPedagogicalAgentService {
 
   DualPedagogicalAgentService({
     this.metaApiKey = '',
-    this.metaModel = 'muse-spark-1.3',
-    this.metaBaseUrl = 'https://api.meta.ai/v1',
+    this.metaModel = kMetaTextModel,
+    this.metaBaseUrl = kMetaBaseUrl,
     http.Client? client,
   }) : _client = client ?? http.Client();
 

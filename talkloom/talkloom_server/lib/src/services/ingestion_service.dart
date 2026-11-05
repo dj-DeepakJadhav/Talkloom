@@ -13,6 +13,7 @@ import 'meta_speech_service.dart';
 import '../generated/protocol.dart' show ImportException;
 import '../sources/safe_url_policy.dart';
 import '../sources/target_language_guard.dart';
+import 'meta_models.dart';
 
 class IngestionService {
   final http.Client _client;
@@ -1003,13 +1004,13 @@ class IngestionService {
             ? base64Data.split(',').last
             : base64Data;
         final response = await _client.post(
-          Uri.parse('https://api.meta.ai/v1/chat/completions'),
+          Uri.parse('$kMetaBaseUrl/chat/completions'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $metaApiKey',
           },
           body: jsonEncode({
-            'model': 'muse-spark-1.3',
+            'model': kMetaMultimodalModel,
             'messages': [
               {
                 'role': 'user',

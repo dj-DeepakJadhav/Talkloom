@@ -89,7 +89,7 @@ void main() {
                   'en',
                   'line',
                   0,
-                  'muse-spark-1.3',
+                  'muse-spark-1.3-contributor',
                 ]),
               ),
             )

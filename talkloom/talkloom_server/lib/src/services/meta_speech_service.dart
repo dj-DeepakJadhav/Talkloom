@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'meta_models.dart';
 
 /// Speech-to-text via the Meta Model API (Muse Voice Transcribe).
 ///
@@ -15,7 +16,7 @@ class MetaSpeechService {
     http.Client? client,
     required this.apiKey,
     this.model = 'muse-voice-transcribe-1.0',
-    this.baseUrl = 'https://api.meta.ai/v1',
+    this.baseUrl = kMetaBaseUrl,
   }) : _client = client ?? http.Client();
 
   final http.Client _client;

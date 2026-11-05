@@ -297,7 +297,10 @@ class KnowledgeEndpoint extends Endpoint {
           'lessonId': lesson.id,
           'sourceId': lesson.sourceId,
           'title': titles[lesson.sourceId] ?? '',
-          'reason': _short(e.toString()),
+          // Provider error bodies stay in server logs, not the response.
+          'reason': e is StateError
+              ? 'The AI provider could not complete this lesson.'
+              : _short(e.toString()),
         });
       }
     }

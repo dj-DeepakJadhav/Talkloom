@@ -11,7 +11,7 @@ void main() {
   group('Meta-only AI configuration', () {
     test('lesson compiler talks to the Meta Model API by default', () {
       final service = DualLessonCompilerService(metaApiKey: 'test-only');
-      expect(service.metaModel, 'muse-spark-1.3');
+      expect(service.metaModel, 'muse-spark-1.3-contributor');
       expect(service.metaBaseUrl, 'https://api.meta.ai/v1');
     });
 

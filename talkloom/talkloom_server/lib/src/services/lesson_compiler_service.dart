@@ -1,5 +1,6 @@
 ﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'meta_models.dart';
 
 class LessonCompilerService {
   final String metaApiKey;
@@ -9,8 +10,8 @@ class LessonCompilerService {
 
   LessonCompilerService({
     required this.metaApiKey,
-    this.metaBaseUrl = 'https://api.meta.ai/v1',
-    this.metaModel = 'muse-spark-1.3',
+    this.metaBaseUrl = kMetaBaseUrl,
+    this.metaModel = kMetaTextModel,
     http.Client? client,
   }) : _client = client ?? http.Client();
 

@@ -75,14 +75,18 @@ class ImportJobRunner {
       // Serverpod's session log goes to the database, not stdout, so Render's
       // Logs tab never shows why an import failed. Print a short, token-masked
       // line as well.
-      final detail = error
-          .toString()
-          .replaceAll(RegExp(r'[A-Za-z0-9_\-]{24,}'), '***')
-          .replaceAll(RegExp(r'\s+'), ' ');
+      // Only provider/pipeline errors are safe to quote; parse errors such as
+      // FormatException echo a slice of the learner's pasted text.
+      final detail = (error is StateError || error is ImportException)
+          ? error
+                .toString()
+                .replaceAll(RegExp(r'[A-Za-z0-9_\-]{24,}'), '***')
+                .replaceAll(RegExp(r'\s+'), ' ')
+          : '';
       stderr.writeln(
         'Import job $jobId failed (stage ${job!.stage}): '
-        '${error.runtimeType}: '
-        '${detail.length > 300 ? detail.substring(0, 300) : detail}',
+        '${error.runtimeType}'
+        '${detail.isEmpty ? '' : ': ${detail.length > 300 ? detail.substring(0, 300) : detail}'}',
       );
       final (code, message) = _explain(
         error,

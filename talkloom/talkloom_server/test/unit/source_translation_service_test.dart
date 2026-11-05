@@ -79,7 +79,7 @@ wie geht es Ihnen?
         'Good morning.',
         'Thank you!',
       ]);
-      expect(sent['model'], 'muse-spark-1.3');
+      expect(sent['model'], 'muse-spark-1.3-contributor');
       final messages = sent['messages'] as List;
       expect(messages.first['content'], contains('untrusted quoted data'));
       expect(

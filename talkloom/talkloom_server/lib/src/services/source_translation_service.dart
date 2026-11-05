@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'meta_models.dart';
 
 /// Display-only cleanup. Saved source evidence is never rewritten here.
 String sourceReadingText(String raw) {
@@ -94,8 +95,8 @@ class SourceTranslationService {
   SourceTranslationService({
     required this.apiKey,
     http.Client? client,
-    this.model = 'muse-spark-1.3',
-    this.baseUrl = 'https://api.meta.ai/v1',
+    this.model = kMetaTextModel,
+    this.baseUrl = kMetaBaseUrl,
   }) : _client = client ?? http.Client(),
        _ownsClient = client == null;
   final String apiKey;

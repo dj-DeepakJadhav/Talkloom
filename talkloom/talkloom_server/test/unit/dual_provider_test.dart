@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 import 'package:talkloom_server/src/services/dual_ai_compiler_service.dart';
 import 'package:talkloom_server/src/services/dual_pedagogical_agent_service.dart';
 import 'package:talkloom_server/src/services/ingestion_service.dart';
+import 'package:talkloom_server/src/services/meta_models.dart';
 import 'package:talkloom_server/src/generated/protocol.dart'
     show ImportException;
 
@@ -44,7 +45,7 @@ void main() {
 
         expect(requestUrl.host, 'api.meta.ai');
         expect(requestUrl.path, '/v1/chat/completions');
-        expect(requestBody['model'], 'muse-spark-1.3');
+        expect(requestBody['model'], 'muse-spark-1.3-contributor');
         // Direct-answer task: keep reasoning light so the token budget
         // serves visible output, not hidden chain-of-thought.
         expect(requestBody['reasoning_effort'], 'low');
@@ -56,6 +57,40 @@ void main() {
         expect((compiled['vocabulary'] as List), hasLength(18));
       },
     );
+
+    test('reports the provider status and reason when the API rejects', () async {
+      final compiler = DualLessonCompilerService(
+        metaApiKey: 'test-key',
+        client: MockClient(
+          (_) async => http.Response(
+            '{"error":{"code":"model_not_found",\n "message":"No such model"}}',
+            404,
+          ),
+        ),
+      );
+
+      await expectLater(
+        compiler.compileLesson(
+          sourceTitle: 'German basics',
+          rawText: 'Ich lerne Deutsch und spreche über Berlin.',
+          targetLanguage: 'de',
+          supportLanguage: 'en',
+          estimatedLevel: 'A1',
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            allOf(contains('status 404'), contains('model_not_found')),
+          ),
+        ),
+      );
+    });
+
+    test('keeps image and video calls off the text-only model', () {
+      expect(kMetaMultimodalModel, 'muse-spark-1.3');
+      expect(kMetaTextModel, isNot(kMetaMultimodalModel));
+    });
 
     test('rejects a lesson without vocabulary evidence', () async {
       final compiler = DualLessonCompilerService(

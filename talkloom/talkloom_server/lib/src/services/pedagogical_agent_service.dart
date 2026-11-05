@@ -1,5 +1,6 @@
 ﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'meta_models.dart';
 
 class PedagogicalAgentTelemetry {
   final String activeMission;
@@ -45,8 +46,8 @@ class PedagogicalAgentService {
 
   PedagogicalAgentService({
     required this.metaApiKey,
-    this.metaBaseUrl = 'https://api.meta.ai/v1',
-    this.metaModel = 'muse-spark-1.3',
+    this.metaBaseUrl = kMetaBaseUrl,
+    this.metaModel = kMetaTextModel,
     http.Client? client,
   }) : _client = client ?? http.Client();
 
@@ -135,8 +136,12 @@ Rules:
         body: jsonEncode({
           'model': metaModel,
           'messages': messages,
+          // Reasoning models spend part of the budget on hidden reasoning;
+          // 120 tokens could leave an empty reply. Same budget as the dual
+          // tutor, with light reasoning.
+          'reasoning_effort': 'low',
           'temperature': 0.6,
-          'max_tokens': 120,
+          'max_tokens': 1024,
         }),
       );
 

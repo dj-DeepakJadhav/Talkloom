@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'meta_models.dart';
 
 /// Number of separate evaluated turns with eligible correct use required
 /// before a target counts as actively mastered. A single turn never suffices.
@@ -155,8 +156,8 @@ class ProviderSemanticEvaluator implements SemanticEvaluator {
 
   ProviderSemanticEvaluator({
     required this.metaApiKey,
-    this.metaModel = 'muse-spark-1.3',
-    this.metaBaseUrl = 'https://api.meta.ai/v1',
+    this.metaModel = kMetaTextModel,
+    this.metaBaseUrl = kMetaBaseUrl,
     http.Client? client,
   }) : _client = client ?? http.Client();
 

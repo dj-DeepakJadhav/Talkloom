@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'meta_models.dart';
 
 /// Video understanding via the Meta Model API (Responses API + input_video).
 ///
@@ -11,8 +12,8 @@ class MetaVideoService {
   MetaVideoService({
     http.Client? client,
     required this.apiKey,
-    this.model = 'muse-spark-1.3',
-    this.baseUrl = 'https://api.meta.ai/v1',
+    this.model = kMetaMultimodalModel,
+    this.baseUrl = kMetaBaseUrl,
   }) : _client = client ?? http.Client();
 
   final http.Client _client;
