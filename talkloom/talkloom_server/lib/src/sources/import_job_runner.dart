@@ -1,3 +1,5 @@
+import 'dart:io' show stderr;
+
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'lesson_import_service.dart';
@@ -69,6 +71,18 @@ class ImportJobRunner {
         level: LogLevel.warning,
         exception: error,
         stackTrace: stackTrace,
+      );
+      // Serverpod's session log goes to the database, not stdout, so Render's
+      // Logs tab never shows why an import failed. Print a short, token-masked
+      // line as well.
+      final detail = error
+          .toString()
+          .replaceAll(RegExp(r'[A-Za-z0-9_\-]{24,}'), '***')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      stderr.writeln(
+        'Import job $jobId failed (stage ${job!.stage}): '
+        '${error.runtimeType}: '
+        '${detail.length > 300 ? detail.substring(0, 300) : detail}',
       );
       final (code, message) = _explain(
         error,
