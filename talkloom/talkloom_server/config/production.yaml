@@ -77,5 +77,5 @@ sessionLogs:
 #  #domain: examplepod.com # Defaults to host-only; set to share across subdomains
 #  #path: / # Defaults to "/"
 #  #secure: true # Defaults to true; the cookie is only sent over https
-#allowedOrigins:
-#  - https://app.examplepod.com # The origin serving your Flutter web app
+allowedOrigins:
+  - https://talkloom.onrender.com # The Render static site serving the Flutter web app
