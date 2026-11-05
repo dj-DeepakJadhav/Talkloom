@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'plain_language_policy.dart';
 import 'meta_models.dart';
@@ -531,8 +532,42 @@ Compile the lesson now.''',
     final body = response.body.replaceAll(RegExp(r'\s+'), ' ');
     throw StateError(
       'Meta Model API returned status ${response.statusCode}: '
-      '${body.length > 200 ? body.substring(0, 200) : body}',
+      '${body.length > 200 ? body.substring(0, 200) : body}'
+      '${response.statusCode == 404 ? await _describeKeyAccess() : ''}',
     );
+  }
+
+  /// Diagnostic for `model_not_found`: which models this server's key can see,
+  /// plus a short hash of the key so it can be compared with the intended one
+  /// (`printf %s "$KEY" | shasum -a 256 | cut -c1-8`) without exposing it.
+  Future<String> _describeKeyAccess() async {
+    final fingerprint = sha256
+        .convert(utf8.encode(metaApiKey))
+        .toString()
+        .substring(0, 8);
+    var models = 'unavailable';
+    try {
+      final response = await _client
+          .get(
+            Uri.parse('$metaBaseUrl/models'),
+            headers: {'Authorization': 'Bearer $metaApiKey'},
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final list = data is Map ? data['data'] : null;
+        if (list is List) {
+          models = [
+            for (final m in list)
+              if (m is Map && m['id'] is String) m['id'] as String,
+          ].join(',');
+        }
+      } else {
+        models = 'HTTP ${response.statusCode}';
+      }
+    } catch (_) {}
+    return ' [requested=$metaModel key_sha256=$fingerprint '
+        'key_len=${metaApiKey.length} visible_models=$models]';
   }
 }
 
