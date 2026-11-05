@@ -1029,16 +1029,28 @@ class IngestionService {
                 ],
               },
             ],
+            // Transcription needs no deliberation; keep hidden reasoning from
+            // eating the token budget and leaving an empty answer.
+            'reasoning_effort': 'low',
             'temperature': 0,
-            'max_tokens': 4096,
+            'max_tokens': 8192,
           }),
         );
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
-          final text = data['choices'][0]['message']['content'] as String;
+          final choice = data['choices'][0] as Map<String, dynamic>;
+          final text = (choice['message']['content'] as String?) ?? '';
           if (text.trim().isNotEmpty) return text.trim();
+          stderr.writeln(
+            'Image OCR returned no text (finish_reason '
+            '${choice['finish_reason']}).',
+          );
+        } else {
+          stderr.writeln('Image OCR failed with status ${response.statusCode}.');
         }
-      } catch (_) {}
+      } catch (error) {
+        stderr.writeln('Image OCR error: ${error.runtimeType}');
+      }
     }
     // 1. Plain-text documents decode locally; Meta vision handles images.
     try {
