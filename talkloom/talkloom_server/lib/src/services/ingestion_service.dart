@@ -11,6 +11,7 @@ import 'embedded_lesson_resolver.dart';
 import 'meta_speech_service.dart';
 import '../generated/protocol.dart' show ImportException;
 import '../sources/safe_url_policy.dart';
+import '../sources/target_language_guard.dart';
 
 class IngestionService {
   final http.Client _client;
@@ -180,7 +181,11 @@ class IngestionService {
     }
 
     if (_isSocialHost(uri.host)) {
-      return await _extractSocialMediaContent(url, userScopeId: userScopeId);
+      return await _extractSocialMediaContent(
+        url,
+        userScopeId: userScopeId,
+        metaApiKey: metaApiKey,
+      );
     }
 
     try {
@@ -470,7 +475,7 @@ class IngestionService {
     final directory = await Directory.systemTemp.createTemp('talkloom-audio-');
     Process? process;
     try {
-      process = await Process.start('yt-dlp', [
+      const args = [
         '--no-warnings',
         '--no-progress',
         '--no-playlist',
@@ -481,10 +486,29 @@ class IngestionService {
         'wav',
         '--postprocessor-args',
         'ffmpeg:-ac 1 -ar 16000 -t $_audioFallbackSeconds',
-        '-o',
-        '${directory.path}${Platform.pathSeparator}audio.%(ext)s',
-        url,
-      ]);
+      ];
+      // yt-dlp may live on PATH (local dev) or in the production Python
+      // venv (/opt/talkloom-python, see Dockerfile). Try both.
+      final outputTemplate =
+          '${directory.path}${Platform.pathSeparator}audio.%(ext)s';
+      try {
+        process = await Process.start('yt-dlp', [
+          ...args,
+          '-o',
+          outputTemplate,
+          url,
+        ]);
+      } catch (_) {
+        final venvYtDlp =
+            '${Platform.pathSeparator}opt${Platform.pathSeparator}talkloom-python${Platform.pathSeparator}bin${Platform.pathSeparator}yt-dlp';
+        if (!await File(venvYtDlp).exists()) rethrow;
+        process = await Process.start(venvYtDlp, [
+          ...args,
+          '-o',
+          outputTemplate,
+          url,
+        ]);
+      }
       // Drain output so a full pipe cannot stall the process.
       process.stdout.drain<void>().ignore();
       process.stderr.drain<void>().ignore();
@@ -520,9 +544,19 @@ class IngestionService {
   }
 
   /// Extracts rich social media context through the existing reader fallback.
+  ///
+  /// Agentic order: (1) page readers (AgentReach, then Jina); (2) verify the
+  /// text actually carries target-language signal — social pages are mostly
+  /// site chrome around spoken/on-screen content; (3) repair by downloading
+  /// the media audio (yt-dlp) and transcribing it with Muse Voice;
+  /// (4) only then give up with guidance. Page text that fails verification
+  /// but exists is still returned when no repair is possible, so the
+  /// pipeline's language guard can judge it (never silently discarded).
   Future<String> _extractSocialMediaContent(
     String url, {
     String? userScopeId,
+    String metaApiKey = '',
+    String targetLanguage = 'de',
   }) async {
     String platform = 'Social Media';
     if (url.contains('instagram.com')) platform = 'Instagram';
@@ -547,6 +581,7 @@ class IngestionService {
       platform = 'X (Twitter)';
     }
 
+    String? pageText;
     try {
       final resolved = await _agentReachWorker.resolveUrlContent(
         Uri.parse(url),
@@ -559,40 +594,84 @@ class IngestionService {
           if (title != null && title.isNotEmpty) title,
           if (author != null && author.isNotEmpty) 'by $author',
         ].join(' ');
-        return '[${resolved.channel} content${heading.isEmpty ? '' : ': $heading'}]\n'
+        pageText =
+            '[${resolved.channel} content${heading.isEmpty ? '' : ': $heading'}]\n'
             '${resolved.text}';
       }
     } catch (_) {
       // Keep the existing public-reader fallback available.
     }
 
-    // Jina fetches on our behalf, so validate the submitted destination before
-    // forwarding it and validate Jina's own connection independently.
-    try {
-      final target = SafeUrlPolicy.parsePublicWebUrl(url);
-      await SafeUrlPolicy.resolvePublicAddresses(
-        target,
-        resolver: _hostResolver,
-        timeout: _requestTimeout,
-      );
-      final jinaUri = Uri.parse('https://r.jina.ai/$url');
-      final response = await _safeGet(
-        jinaUri,
-        headers: {
-          'User-Agent': 'Talkloom-Social-Ingest/1.0',
-          'Accept': 'text/plain, text/markdown',
-        },
-        maxBytes: _maxSocialResponseBytes,
-      );
+    if (pageText == null) {
+      // Jina fetches on our behalf, so validate the submitted destination
+      // before forwarding it and validate Jina's own connection
+      // independently.
+      try {
+        final target = SafeUrlPolicy.parsePublicWebUrl(url);
+        await SafeUrlPolicy.resolvePublicAddresses(
+          target,
+          resolver: _hostResolver,
+          timeout: _requestTimeout,
+        );
+        final jinaUri = Uri.parse('https://r.jina.ai/$url');
+        final response = await _safeGet(
+          jinaUri,
+          headers: {
+            'User-Agent': 'Talkloom-Social-Ingest/1.0',
+            'Accept': 'text/plain, text/markdown',
+          },
+          maxBytes: _maxSocialResponseBytes,
+        );
 
-      if (response.statusCode == 200 && response.body.trim().length > 60) {
-        final content = response.body.trim();
-        final truncated = content.length > 3000
-            ? content.substring(0, 3000)
-            : content;
-        return '[$platform Content & Discussion]\n$truncated';
+        if (response.statusCode == 200 && response.body.trim().length > 60) {
+          final content = response.body.trim();
+          final truncated = content.length > 3000
+              ? content.substring(0, 3000)
+              : content;
+          pageText = '[$platform Content & Discussion]\n$truncated';
+        }
+      } catch (_) {}
+    }
+
+    // Verify: page text with real target-language signal is the lesson.
+    if (pageText != null &&
+        TargetLanguageGuard.hasSignal(
+          text: pageText,
+          targetLanguage: targetLanguage,
+        )) {
+      return pageText;
+    }
+
+    // Repair: the German is spoken (reels, TikToks), not written. Download
+    // the media audio and transcribe it, same path as the YouTube fallback.
+    // Needs yt-dlp + ffmpeg on the server and a Meta key; without them the
+    // page text (or the guidance below) is what the learner gets.
+    if (metaApiKey.isNotEmpty) {
+      try {
+        final wav = await _audioDownloader(url);
+        if (wav != null && wav.isNotEmpty) {
+          final transcript = (await _audioTranscriber(
+            wav,
+            metaApiKey,
+          ))?.trim();
+          if (transcript != null &&
+              transcript.length >= _minAudioTranscriptChars &&
+              TargetLanguageGuard.hasSignal(
+                text: transcript,
+                targetLanguage: targetLanguage,
+              )) {
+            return '[$platform content: audio-transcription: spoken '
+                '${targetLanguage.toUpperCase()} transcribed by Muse Voice '
+                'from the first ${_audioFallbackSeconds ~/ 60} minutes; '
+                'words may be misheard]\n$transcript';
+          }
+        }
+      } catch (_) {
+        // Fall through to page text / guidance below.
       }
-    } catch (_) {}
+    }
+
+    if (pageText != null) return pageText;
 
     throw StateError(
       'Talkloom could not read this $platform link. '

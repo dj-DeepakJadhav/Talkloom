@@ -115,6 +115,22 @@ abstract final class TargetLanguageGuard {
         (v.length > 500 && !v.contains(' ') && !v.contains('\n'));
   }
 
+  /// True when [text] carries enough target-language signal to judge, or
+  /// is too short/unknown to judge (same rules as [checkText], no throw).
+  /// Used by extractors to decide whether page text is real content or
+  /// just site chrome around spoken/on-screen material.
+  static bool hasSignal({
+    required String text,
+    required String targetLanguage,
+  }) {
+    try {
+      checkText(text: text, targetLanguage: targetLanguage);
+      return true;
+    } on ImportException {
+      return false;
+    }
+  }
+
   /// Throws [ImportException] (`wrong_language`) when [text] is long enough
   /// to judge and shows no signal of [targetLanguage]. Unknown languages
   /// and short texts pass through unchecked.

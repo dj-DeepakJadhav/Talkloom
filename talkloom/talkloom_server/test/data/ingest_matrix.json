@@ -1,0 +1,81 @@
+[
+  {
+    "name": "dw-hallo-lesson-page",
+    "type": "url",
+    "url": "https://learngerman.dw.com/en/hallo/l-37250531",
+    "targetLanguage": "de",
+    "expect": "ok"
+  },
+  {
+    "name": "instagram-reel-german",
+    "type": "url",
+    "url": "https://www.instagram.com/reel/DfKOCUMgV3G/?cplk=MTNka2RodDQ3bDB3ag==",
+    "targetLanguage": "de",
+    "expect": "ok",
+    "note": "Needs AgentReach worker; login-walled without it"
+  },
+  {
+    "name": "instagram-reel-german-2",
+    "type": "url",
+    "url": "https://www.instagram.com/reel/De_lzAdIQfS/?psln=dTg5aHoyMHZueDd4",
+    "targetLanguage": "de",
+    "expect": "ok",
+    "note": "Second reel from learner; production needs yt-dlp/caption path"
+  },
+  {
+    "name": "youtube-english-narration",
+    "type": "url",
+    "url": "https://youtube.com/watch?v=mNX1wpIQ4Uk&is=DZ1zBZKxYq5zDf9O",
+    "targetLanguage": "de",
+    "expect": "wrong_language"
+  },
+  {
+    "name": "pasted-german-text",
+    "type": "text",
+    "text": "Guten Morgen, Herr Müller, wie geht es Ihnen heute? Ich lerne jeden Tag ein bisschen Deutsch, denn die Sprache ist wichtig für die Arbeit und das Studium in Berlin.",
+    "targetLanguage": "de",
+    "expect": "ok"
+  },
+  {
+    "name": "pasted-english-text",
+    "type": "text",
+    "text": "The lesson starts today and students learn languages because studying is important for university and future work in many countries around the world every single morning without exception. The teacher explains grammar slowly, asks questions about daily life, and helps everyone speak with confidence in class and at home.",
+    "targetLanguage": "de",
+    "expect": "wrong_language"
+  },
+  {
+    "name": "upload-german-text-document",
+    "type": "document",
+    "file": "test/data/fixtures/german-note.txt",
+    "mime": "text/plain",
+    "targetLanguage": "de",
+    "expect": "ok"
+  },
+  {
+    "name": "scan-german-tenses-cheatsheet",
+    "type": "image",
+    "file": "test/data/fixtures/cheatsheet-tenses.jpg",
+    "mime": "image/jpeg",
+    "targetLanguage": "de",
+    "expect": "ok",
+    "note": "User-provided image; OCR needs META_API_KEY"
+  },
+  {
+    "name": "scan-german-articles-cheatsheet",
+    "type": "image",
+    "file": "test/data/fixtures/cheatsheet-articles.jpg",
+    "mime": "image/jpeg",
+    "targetLanguage": "de",
+    "expect": "ok",
+    "note": "User-provided image; OCR needs META_API_KEY"
+  },
+  {
+    "name": "scan-german-cases-cheatsheet",
+    "type": "image",
+    "file": "test/data/fixtures/cheatsheet-cases.jpg",
+    "mime": "image/jpeg",
+    "targetLanguage": "de",
+    "expect": "ok",
+    "note": "User-provided image; OCR needs META_API_KEY"
+  }
+]

@@ -31,7 +31,7 @@ RUN mkdir -p config web migrations
 
 FROM dart:3.12.2
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates \
+  && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

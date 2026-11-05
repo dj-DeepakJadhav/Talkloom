@@ -1,3 +1,4 @@
 youtube-transcript-api==1.2.4
 pypdf==6.21.4
+yt-dlp>=2025.1.1
 agent-reach @ git+https://github.com/Panniantong/Agent-Reach.git@14c213405669414492bda0f8d52cc6531d062c45
