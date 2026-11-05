@@ -109,7 +109,7 @@ class _MyGermanScreenState extends ConsumerState<MyGermanScreen> {
                   }
                   entries.add(
                     _Entry(
-                      title: rule.concept,
+                      title: rule.display,
                       description: rule.explanation,
                       quote: rule.sourceSentence,
                       source: title,

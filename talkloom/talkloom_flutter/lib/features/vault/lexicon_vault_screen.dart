@@ -626,7 +626,7 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
 
     final filtered = rules.where((r) {
       if (_searchQuery.isNotEmpty) {
-        return r.concept.toLowerCase().contains(_searchQuery) ||
+        return r.display.toLowerCase().contains(_searchQuery) ||
             r.explanation.toLowerCase().contains(_searchQuery);
       }
       return true;
@@ -658,7 +658,7 @@ class _LexiconVaultScreenState extends ConsumerState<LexiconVaultScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  rule.concept,
+                  rule.display,
                   style: context.type.labelSmall.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w700,

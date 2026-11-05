@@ -383,7 +383,7 @@ class _UniversalIngestSheetState extends ConsumerState<UniversalIngestSheet> {
                 if (_grammar)
                   ...result.grammar.map(
                     (item) => ListTile(
-                      title: Text(item.concept),
+                      title: Text(item.display),
                       subtitle: Text(item.explanation),
                     ),
                   )

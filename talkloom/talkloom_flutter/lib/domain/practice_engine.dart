@@ -311,7 +311,7 @@ class PracticeBuilder {
         if (g.sourceSentence.trim().isNotEmpty)
           (
             sentence: g.sourceSentence.trim(),
-            hint: g.concept.isEmpty ? null : g.concept,
+            hint: g.display.isEmpty ? null : g.display,
           ),
       for (final w in words)
         if (w.sourceContext.trim().isNotEmpty)

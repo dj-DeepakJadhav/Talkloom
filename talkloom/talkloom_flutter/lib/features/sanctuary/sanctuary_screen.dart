@@ -999,7 +999,7 @@ class _GrammarTabContent extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      rule.concept,
+                      rule.display,
                       style: context.type.labelSmall.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w700,

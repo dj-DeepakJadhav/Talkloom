@@ -200,7 +200,7 @@ class GrammarActivityScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     GrammarExplanation(
-                      concept: rule.concept,
+                      concept: rule.display,
                       explanation: rule.explanation,
                       sentence: rule.sourceSentence,
                     ),

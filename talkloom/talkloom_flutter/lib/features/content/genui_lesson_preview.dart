@@ -83,7 +83,7 @@ class _GenUiLessonPreviewState extends State<GenUiLessonPreview> {
               }
               final rule = widget.lesson.grammar[index];
               return GrammarExplanation(
-                concept: rule.concept,
+                concept: rule.display,
                 explanation: rule.explanation,
                 sentence: rule.sourceSentence,
               );

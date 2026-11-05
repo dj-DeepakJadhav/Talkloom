@@ -211,11 +211,19 @@ class GrammarRule {
     required this.concept,
     required this.sourceSentence,
     required this.explanation,
+    this.label = '',
   });
 
   final String concept;
   final String sourceSentence;
   final String explanation;
+
+  /// Human-readable name when the compiler stored one; otherwise the
+  /// canonical concept key (slugs like `formal_vs_informal_address` are
+  /// never shown raw).
+  final String label;
+
+  String get display => label.isEmpty ? concept : label;
 
   static GrammarRule? fromJson(Map<String, dynamic> json) {
     final concept = json['concept'] as String? ?? '';
@@ -224,6 +232,7 @@ class GrammarRule {
       concept: concept,
       sourceSentence: json['sourceSentence'] as String? ?? '',
       explanation: json['explanation'] as String? ?? '',
+      label: json['label'] as String? ?? '',
     );
   }
 }
