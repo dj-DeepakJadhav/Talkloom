@@ -11,11 +11,11 @@ Status on 5 November 2026: the app opens and the Add content screen works, but l
 These are real screenshots of the live app, taken at 430 x 932.
 
 <p>
-  <img src="docs/screenshots/home.png" width="19%" alt="Home screen with the Add content button" />
-  <img src="docs/screenshots/add-link-typed.png" width="19%" alt="Add content, Link tab, with a YouTube link typed in" />
-  <img src="docs/screenshots/add-text-typed.png" width="19%" alt="Add content, Text tab, with a short German story typed in" />
-  <img src="docs/screenshots/add-scan.png" width="19%" alt="Add content, Scan tab" />
-  <img src="docs/screenshots/add-upload.png" width="19%" alt="Add content, Upload tab" />
+  <img src="assets/readme/screenshots/home.png" width="19%" alt="Home screen with the Add content button" />
+  <img src="assets/readme/screenshots/add-link-typed.png" width="19%" alt="Add content, Link tab, with a YouTube link typed in" />
+  <img src="assets/readme/screenshots/add-text-typed.png" width="19%" alt="Add content, Text tab, with a short German story typed in" />
+  <img src="assets/readme/screenshots/add-scan.png" width="19%" alt="Add content, Scan tab" />
+  <img src="assets/readme/screenshots/add-upload.png" width="19%" alt="Add content, Upload tab" />
 </p>
 
 From left to right: Home, Link, Text, Scan, Upload. Every tab has an optional title, a "Learn" language (Deutsch), a "Learn now" button and a "Practice later" button. The hint under the fields reads "Level adapts to your content, Explanations in English".
@@ -26,15 +26,15 @@ There are no lesson screenshots because we could not get a lesson to generate.
 
 A 50-second vertical promo, made with HyperFrames from the screenshots above and a German line spoken by a macOS voice. It stops at the Add content screen on purpose, since the lesson screens were not available.
 
-[![Talkloom promo, YouTube Short](docs/promo-frame.png)](https://youtube.com/shorts/cvuMRa4yDLs)
+[![Talkloom promo, YouTube Short](assets/readme/promo-frame.png)](https://youtube.com/shorts/cvuMRa4yDLs)
 
 Watch it here: https://youtube.com/shorts/cvuMRa4yDLs
 
 ## How it works
 
-![Talkloom architecture](docs/architecture.png)
+![Talkloom architecture](assets/readme/architecture.png)
 
-The interactive version is in [docs/architecture.html](docs/architecture.html). Download it and open it in a browser to zoom and trace paths.
+The interactive version is in [assets/readme/architecture.html](assets/readme/architecture.html). Download it and open it in a browser to zoom and trace paths.
 
 When you tap "Learn now", this is the path the code follows:
 
@@ -105,7 +105,7 @@ To find out:
 | `talkloom/talkloom_client` | Generated client code shared by the app |
 | `talkloom/web_dist` | The production web build the server serves |
 | `tools/egress-probe` | The temporary Meta API test service |
-| `docs` | Screenshots and the architecture diagram used in this file |
+| `assets/readme` | Screenshots and the architecture diagram used in this file |
 
 ## Run it yourself
 
